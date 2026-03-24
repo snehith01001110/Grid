@@ -43,6 +43,9 @@ verification_fail_action() {
 # ─── Routing ─────────────────────────────────────────────────────────────────
 ROUTE_OVERRIDE=""  # set via --route-override flag
 
+# ─── Dory mode (ephemeral — don't save anything to files) ────────────────────
+DORY_MODE="${DORY_MODE:-0}"  # set via --dory flag or env
+
 # ─── Colors ──────────────────────────────────────────────────────────────────
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -85,6 +88,10 @@ elapsed_since() {
 safe_write() {
     local dest="$1"
     local content="$2"
+    # Dory mode: skip all file writes (except state.json which is needed for TUI)
+    if [[ "${DORY_MODE:-0}" == "1" && "$dest" != *"state.json"* ]]; then
+        return 0
+    fi
     local dir
     dir="$(dirname "$dest")"
     mkdir -p "$dir"
@@ -190,17 +197,32 @@ run_prompt() {
         fi
     fi
 
+    # Execute with fallback: if model fails and isn't local, try local as fallback
+    local run_status=0
     if [[ "$model_name" == "local-api" || "$model_name" == "ldr" ]]; then
         local json_payload
         json_payload=$(jq -n --arg p "$prompt" '{"model":"default","messages":[{"role":"user","content":$p}]}')
-        eval "$model_cmd" "'$json_payload'" > "$log_file" 2>&1
+        eval "$model_cmd" "'$json_payload'" > "$log_file" 2>&1 || run_status=$?
     elif [[ "$model_name" == "local" || "$model_name" == "ollama" || "$model_name" == "deepseek" ]]; then
         # MLX / ollama — pipe prompt via stdin
-        printf '%s' "$prompt" | eval "$model_cmd" > "$log_file" 2>&1
+        printf '%s' "$prompt" | eval "$model_cmd" > "$log_file" 2>&1 || run_status=$?
     else
-        # Claude Code headless — pipe prompt via stdin
-        printf '%s' "$prompt" | eval "$model_cmd" > "$log_file" 2>&1
+        # Other models (claude, openai, etc.) — pipe prompt via stdin
+        printf '%s' "$prompt" | eval "$model_cmd" > "$log_file" 2>&1 || run_status=$?
+
+        # If non-local model fails, try local as fallback
+        if [[ $run_status -ne 0 && "$model_name" != "local" ]]; then
+            local local_cmd
+            local_cmd="$(get_model_cmd "local" 2>/dev/null)" || true
+            if [[ -n "$local_cmd" ]]; then
+                printf '\n[%s failed, falling back to local]\n' "$model_name" >> "$log_file"
+                printf '%s' "$prompt" | eval "$local_cmd" >> "$log_file" 2>&1
+                run_status=$?
+            fi
+        fi
     fi
+
+    return $run_status
 }
 
 # ─── Decision log ────────────────────────────────────────────────────────────
@@ -269,22 +291,31 @@ Expected outcome: ${expected:0:200}"
     json_block="$(echo "$content" | python3 -c "
 import sys, json, re
 text = sys.stdin.read()
-# Find first JSON object
-m = re.search(r'\{[^}]+\}', text)
-if m:
-    print(m.group())
-else:
-    print('{}')
+# Find first valid JSON object (greedy match of balanced braces)
+# Look for '{' then everything up to matching '}'
+matches = re.finditer(r'\{\"backend\":[^}]*\}', text)
+for m in matches:
+    try:
+        json.loads(m.group())
+        print(m.group())
+        sys.exit(0)
+    except:
+        pass
+print('{}')
 " 2>/dev/null)" || json_block="{}"
 
     local backend reasoning
-    backend="$(echo "$json_block"  | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('backend',''))"  2>/dev/null)" || backend=""
-    reasoning="$(echo "$json_block" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('reasoning',''))" 2>/dev/null)" || reasoning=""
+    backend="$(echo "$json_block"  | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('backend','').strip())"  2>/dev/null)" || backend=""
+    reasoning="$(echo "$json_block" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('reasoning','').strip())" 2>/dev/null)" || reasoning=""
+
+    # Trim any residual whitespace
+    backend="$(printf '%s' "$backend" | tr -d '[:space:]')"
 
     # Validate backend value
     if [[ ! "$backend" =~ ^(claude|local)$ ]]; then
+        local orig_backend="$backend"
         backend="claude"
-        reasoning="Router returned invalid backend '${backend}', defaulting to claude"
+        reasoning="Router returned invalid backend '${orig_backend}', defaulting to claude"
     fi
 
     # Availability fallbacks
@@ -568,11 +599,30 @@ execute_task() {
     # Build the full prompt
     local full_prompt=""
 
+    # Prepend persistent memory
+    local mem_ctx
+    mem_ctx="$(load_memory_context)"
+    if [[ -n "$mem_ctx" ]]; then
+        full_prompt="Persistent context about the user:
+$mem_ctx
+
+"
+    fi
+
+    # Inject relevant knowledge base context for research/synthesis tasks
+    if [[ "$task_type" == "research" || "$task_type" == "synthesis" || "$task_type" == "code" ]]; then
+        local kb_ctx
+        kb_ctx="$(load_relevant_context "$prompt_text" 2)"
+        if [[ -n "$kb_ctx" ]]; then
+            full_prompt="${full_prompt}${kb_ctx}"
+        fi
+    fi
+
     # Prepend global feedback
     local feedback
     feedback="$(read_feedback "$mission")"
     if [[ -n "$feedback" ]]; then
-        full_prompt="Global context from the researcher:
+        full_prompt="${full_prompt}Global context from the researcher:
 $feedback
 
 "
@@ -845,6 +895,13 @@ run_mission() {
 
     # Decision log summary
     log_decision "$mission_slug" "-" "Run complete: $completed completed, $failed failed, $skipped skipped ($elapsed)"
+
+    # Auto-learn: distill concepts in the background if any tasks completed
+    if [[ "$completed" -gt 0 ]]; then
+        printf "\n${DIM}⟳ Auto-learning from mission (background)...${RESET}\n"
+        cmd_learn "$mission_slug" &>/dev/null &
+        disown
+    fi
 }
 
 # ─── Resolve mission file ───────────────────────────────────────────────────
@@ -1081,7 +1138,301 @@ for i, c in enumerate(text):
     fi
 }
 
-# ─── Ask command (simple one-shot question) ─────────────────────────────────
+# ─── Memory system ────────────────────────────────────────────────────────────
+GRID_MEMORY_FILE="$KNOWLEDGE_DIR/grid-memory.md"
+
+load_memory_context() {
+    # Returns memory content to prepend to prompts
+    if [[ -f "$GRID_MEMORY_FILE" ]]; then
+        printf '%s' "$(cat "$GRID_MEMORY_FILE")"
+    fi
+}
+
+cmd_remember() {
+    local fact="$*"
+    if [[ -z "$fact" ]]; then
+        printf "${RED}✗ Nothing to remember.${RESET}\n"
+        printf "Usage: ./mission.sh remember 'my name is Nayak'\n"
+        return 1
+    fi
+    mkdir -p "$(dirname "$GRID_MEMORY_FILE")"
+    # Append fact with timestamp
+    printf '\n- %s  *(remembered %s)*' "$fact" "$(date '+%Y-%m-%d')" >> "$GRID_MEMORY_FILE"
+    printf "${GREEN}✓ Remembered: %s${RESET}\n" "$fact"
+}
+
+cmd_forget() {
+    local pattern="$*"
+    if [[ -z "$pattern" ]]; then
+        if [[ -f "$GRID_MEMORY_FILE" ]]; then
+            printf "${BOLD}Current memories:${RESET}\n"
+            cat "$GRID_MEMORY_FILE"
+        else
+            printf "${DIM}No memories yet.${RESET}\n"
+        fi
+        return 0
+    fi
+    if [[ -f "$GRID_MEMORY_FILE" ]]; then
+        local before after
+        before="$(wc -l < "$GRID_MEMORY_FILE")"
+        grep -v "$pattern" "$GRID_MEMORY_FILE" > "$GRID_MEMORY_FILE.tmp" || true
+        mv "$GRID_MEMORY_FILE.tmp" "$GRID_MEMORY_FILE"
+        after="$(wc -l < "$GRID_MEMORY_FILE")"
+        printf "${GREEN}✓ Removed %d matching memories.${RESET}\n" "$(( before - after ))"
+    fi
+}
+
+# ─── Knowledge base (concepts extracted from research) ────────────────────────
+CONCEPTS_DIR="$KNOWLEDGE_DIR/concepts"
+
+load_relevant_context() {
+    # Keyword-search concept files for content relevant to the query
+    local query="$1"
+    local max_concepts="${2:-3}"
+    [[ ! -d "$CONCEPTS_DIR" ]] && return
+
+    # Extract meaningful words (4+ chars, skip common words)
+    local keywords
+    keywords="$(printf '%s' "$query" | python3 -c "
+import sys, re
+text = sys.stdin.read().lower()
+stopwords = {'this','that','with','from','have','been','will','they','what','when','where','which','your','their','there','about','would','could','should','these','those','other','more','also','into','over','then','than','some','such','only','each','both','much','very','just','like','well','even','most','many','does','used','need','make','work','here','same','back','take','come','good','know','time','look','only','over','also','use','its','its','how','can','are','but','not','the','and','for','you','him','her','was'}
+words = re.findall(r'\b[a-z]{4,}\b', text)
+keywords = [w for w in words if w not in stopwords]
+# Deduplicate preserving order
+seen = set()
+unique = []
+for w in keywords:
+    if w not in seen:
+        seen.add(w)
+        unique.append(w)
+print(' '.join(unique[:8]))
+" 2>/dev/null)" || keywords=""
+
+    [[ -z "$keywords" ]] && return
+
+    # Score each concept file by keyword hit count
+    local results
+    results="$(python3 -c "
+import os, re, sys
+concepts_dir = '$CONCEPTS_DIR'
+keywords = '$keywords'.split()
+files = [f for f in os.listdir(concepts_dir) if f.endswith('.md')]
+scores = []
+for fname in files:
+    path = os.path.join(concepts_dir, fname)
+    try:
+        content = open(path).read().lower()
+        score = sum(content.count(k) for k in keywords)
+        if score > 0:
+            scores.append((score, fname, path))
+    except:
+        pass
+scores.sort(reverse=True)
+for score, fname, path in scores[:$max_concepts]:
+    print(path)
+" 2>/dev/null)" || results=""
+
+    [[ -z "$results" ]] && return
+
+    local context=""
+    while IFS= read -r fpath; do
+        [[ -z "$fpath" ]] && continue
+        # Extract title and key sections (skip frontmatter, take first 600 chars of content)
+        local snippet
+        snippet="$(python3 -c "
+import sys, re
+content = open('$fpath' if '$fpath' else sys.argv[1]).read()
+# Strip frontmatter
+content = re.sub(r'^---.*?---\n', '', content, flags=re.DOTALL)
+# Get title from filename or first heading
+fname = os.path.basename('$fpath').replace('.md', '').replace('-', ' ')
+import os
+fname = os.path.basename('$fpath').replace('.md', '').replace('-', ' ')
+# Trim to first 600 chars
+content = content.strip()[:600]
+print(f'[{fname}]\n{content}')
+" 2>/dev/null)"
+        [[ -n "$snippet" ]] && context="${context}${snippet}\n\n"
+    done <<< "$results"
+
+    if [[ -n "$context" ]]; then
+        printf '--- Relevant prior research ---\n'
+        printf '%s' "$context"
+        printf '--- End prior research ---\n\n'
+    fi
+}
+
+cmd_learn() {
+    # Extract key concepts from a completed mission and save to knowledge/concepts/
+    local mission_slug="$1"
+    if [[ -z "$mission_slug" ]]; then
+        # List available missions to learn from
+        printf "${BOLD}Available missions to learn from:${RESET}\n"
+        if [[ -d "$KNOWLEDGE_DIR/missions" ]]; then
+            for d in "$KNOWLEDGE_DIR/missions"/*/; do
+                [[ -d "$d" ]] && printf "  %s\n" "$(basename "$d")"
+            done
+        fi
+        printf "\nUsage: ./mission.sh learn <mission-slug>\n"
+        return 0
+    fi
+
+    local mission_dir="$KNOWLEDGE_DIR/missions/$mission_slug"
+    if [[ ! -d "$mission_dir" ]]; then
+        printf "${RED}✗ Mission not found: %s${RESET}\n" "$mission_slug"
+        exit 1
+    fi
+
+    mkdir -p "$CONCEPTS_DIR"
+    local concept_path="$CONCEPTS_DIR/${mission_slug}.md"
+
+    printf "${CYAN}⟳ Extracting concepts from: %s${RESET}\n" "$mission_slug"
+
+    # Gather all task output (skip index/feedback files)
+    local all_content=""
+    for note in "$mission_dir"/*.md; do
+        local basename
+        basename="$(basename "$note")"
+        [[ "$basename" == _* ]] && continue
+        all_content="${all_content}
+
+=== $basename ===
+$(cat "$note")
+"
+    done
+
+    if [[ -z "$all_content" ]]; then
+        printf "${RED}✗ No task notes found in %s${RESET}\n" "$mission_dir"
+        exit 1
+    fi
+
+    local extraction_prompt="You are a knowledge distiller. Extract and structure the key concepts, findings, and reusable knowledge from this research mission.
+
+Mission: $mission_slug
+
+Research content:
+${all_content:0:8000}
+
+Output a markdown document with these sections:
+1. ## Summary (2-3 sentences: what this research covers)
+2. ## Key Findings (bullet points of the most important discoveries)
+3. ## Key Concepts (definitions/explanations of domain terms discovered)
+4. ## Actionable Insights (what can be built on or referenced later)
+5. ## Open Questions (unresolved questions for future research)
+
+Be concise and factual. Focus on content that will be useful context for future questions."
+
+    # Use local model for extraction (summarization — local handles this well)
+    local model_cmd model_name
+    model_cmd="$(get_model_cmd "local" 2>/dev/null)" || model_cmd=""
+    model_name="local"
+    if [[ -z "$model_cmd" ]]; then
+        model_cmd="$(get_model_cmd "claude" 2>/dev/null)" || true
+        model_name="claude"
+    fi
+
+    local log_file
+    log_file="$(mktemp)"
+    run_prompt "$extraction_prompt" "$log_file" "$model_cmd" "$model_name" || true
+
+    local output
+    output="$(cat "$log_file")"
+    if [[ -z "$output" ]]; then
+        printf "${RED}✗ Extraction failed.${RESET}\n"
+        exit 1
+    fi
+
+    # Save concept file
+    safe_write "$concept_path" "---
+title: $mission_slug
+source_mission: $mission_slug
+date: $(date '+%Y-%m-%d')
+---
+
+$output
+"
+    printf "${GREEN}✓ Concepts saved to knowledge/concepts/%s.md${RESET}\n" "$mission_slug"
+    printf "\n%s\n" "$output"
+}
+
+cmd_knowledge() {
+    # List or search the knowledge base
+    local query="$*"
+    if [[ ! -d "$CONCEPTS_DIR" ]] || [[ -z "$(ls "$CONCEPTS_DIR" 2>/dev/null)" ]]; then
+        printf "${DIM}No concepts in knowledge base yet.${RESET}\n"
+        printf "Run: ./mission.sh learn <mission-slug>\n"
+        return 0
+    fi
+
+    if [[ -z "$query" ]]; then
+        printf "${BOLD}Knowledge Base:${RESET}\n\n"
+        for f in "$CONCEPTS_DIR"/*.md; do
+            local title
+            title="$(basename "$f" .md)"
+            local summary
+            summary="$(grep -A2 '## Summary' "$f" 2>/dev/null | tail -1 | sed 's/^[[:space:]]*//')" || summary=""
+            printf "  ${CYAN}%-40s${RESET} %s\n" "$title" "${summary:0:60}"
+        done
+    else
+        printf "${BOLD}Searching knowledge base for: %s${RESET}\n\n" "$query"
+        local ctx
+        ctx="$(load_relevant_context "$query" 5)"
+        if [[ -n "$ctx" ]]; then
+            printf '%s\n' "$ctx"
+        else
+            printf "${DIM}No relevant concepts found.${RESET}\n"
+        fi
+    fi
+}
+
+# ─── Conversation history ─────────────────────────────────────────────────────
+CONVERSATION_FILE="$MISSION_DIR/conversation.jsonl"
+
+get_conversation_context() {
+    # Return last N turns as context for conversational ask mode
+    local max_turns="${1:-5}"
+    if [[ ! -f "$CONVERSATION_FILE" ]]; then
+        return
+    fi
+    local history=""
+    history="$(tail -n "$max_turns" "$CONVERSATION_FILE" | python3 -c "
+import sys, json
+lines = sys.stdin.read().strip().split('\n')
+parts = []
+for line in lines:
+    if not line.strip():
+        continue
+    try:
+        d = json.loads(line)
+        parts.append(f\"User: {d['q']}\nAssistant: {d['a']}\")
+    except:
+        pass
+if parts:
+    print('--- Previous conversation ---')
+    print('\n\n'.join(parts))
+    print('--- End of conversation ---\n')
+" 2>/dev/null)" || history=""
+    printf '%s' "$history"
+}
+
+append_conversation() {
+    local question="$1" answer="$2"
+    mkdir -p "$(dirname "$CONVERSATION_FILE")"
+    python3 -c "
+import json, sys
+q = sys.argv[1]
+a = sys.argv[2][:500]  # truncate long answers
+print(json.dumps({'q': q, 'a': a}))
+" "$question" "$answer" >> "$CONVERSATION_FILE"
+}
+
+clear_conversation() {
+    rm -f "$CONVERSATION_FILE"
+    printf "${GREEN}✓ Conversation history cleared.${RESET}\n"
+}
+
+# ─── Ask command (conversational) ────────────────────────────────────────────
 cmd_ask() {
     local question="$*"
     if [[ -z "$question" ]]; then
@@ -1090,11 +1441,67 @@ cmd_ask() {
         exit 1
     fi
 
-    printf "${CYAN}⟳ Asking ${ACTIVE_MODEL_NAME}...${RESET}\n\n"
+    # Special commands
+    if [[ "$question" == "/clear" || "$question" == "/new" ]]; then
+        clear_conversation
+        return 0
+    fi
+
+    # Route through router when in auto mode
+    local resolved_model="$ACTIVE_MODEL_NAME"
+    local resolved_cmd="$ACTIVE_MODEL"
+    local routing_reason=""
+    if [[ "$ACTIVE_MODEL_NAME" == "auto" || "$ACTIVE_MODEL" == "__auto__" ]]; then
+        local route_result
+        route_result="$(route_task "ask" "$question" "")"
+        resolved_model="${route_result%%|*}"
+        routing_reason="${route_result#*|}"
+        resolved_cmd="$(get_model_cmd "$resolved_model" 2>/dev/null)" || resolved_cmd=""
+        if [[ -z "$resolved_cmd" ]]; then
+            resolved_model="claude"
+            resolved_cmd="$(get_model_cmd "claude")"
+            routing_reason="[no cmd for $resolved_model, fell back] $routing_reason"
+        fi
+        printf "${CYAN}⟳ Asking auto...${RESET}\n"
+        printf "  ${CYAN}⟶ Routed to: %s${RESET} ${DIM}(%s)${RESET}\n" "$resolved_model" "$routing_reason"
+    else
+        printf "${CYAN}⟳ Asking ${ACTIVE_MODEL_NAME}...${RESET}\n"
+    fi
+
+    # Build full prompt with memory + knowledge context + conversation history
+    local full_prompt=""
+
+    # Prepend persistent memory (facts about user/context)
+    local memory
+    memory="$(load_memory_context)"
+    if [[ -n "$memory" ]]; then
+        full_prompt="Persistent context about the user:
+${memory}
+
+"
+    fi
+
+    # Inject relevant prior research from knowledge base
+    local knowledge_ctx
+    knowledge_ctx="$(load_relevant_context "$question" 3)"
+    if [[ -n "$knowledge_ctx" ]]; then
+        full_prompt="${full_prompt}${knowledge_ctx}"
+        printf "  ${DIM}⟶ Injecting relevant knowledge context${RESET}\n" >&2
+    fi
+
+    # Prepend conversation history
+    local conv_ctx
+    conv_ctx="$(get_conversation_context 5)"
+    if [[ -n "$conv_ctx" ]]; then
+        full_prompt="${full_prompt}${conv_ctx}
+"
+    fi
+
+    full_prompt="${full_prompt}${question}"
 
     local log_file
     log_file="$(mktemp)"
-    run_prompt "$question" "$log_file" || true
+    run_prompt "$full_prompt" "$log_file" "$resolved_cmd" "$resolved_model" || true
 
     local output
     output="$(cat "$log_file")"
@@ -1102,17 +1509,27 @@ cmd_ask() {
         printf "${RED}✗ No output from model.${RESET}\n"
         exit 1
     fi
-    printf '%s\n' "$output"
+    printf '\n%s\n' "$output"
 
-    # Save to knowledge/asks/ as a dated markdown note
-    local asks_dir="$KNOWLEDGE_DIR/asks"
-    mkdir -p "$asks_dir"
-    local slug
-    slug="$(slugify "${question:0:50}")"
-    local note_path="$asks_dir/${slug}.md"
-    safe_write "$note_path" "---
+    # Save conversation turn
+    append_conversation "$question" "$output"
+
+    # Save to knowledge/asks/ as a dated markdown note (skip in dory mode)
+    if [[ "${DORY_MODE:-0}" == "1" ]]; then
+        printf "\n${DIM}Dory mode — nothing saved${RESET}\n"
+    else
+        local asks_dir="$KNOWLEDGE_DIR/asks"
+        mkdir -p "$asks_dir"
+        local slug
+        slug="$(slugify "${question:0:50}")"
+        local note_path="$asks_dir/${slug}.md"
+        local model_display="$resolved_model"
+        [[ "$ACTIVE_MODEL_NAME" == "auto" ]] && model_display="auto → $resolved_model"
+        safe_write "$note_path" "---
 date: $(date '+%Y-%m-%d %H:%M')
-model: $ACTIVE_MODEL_NAME
+model: $model_display
+routed_to: $resolved_model
+routing_reason: '$(printf '%s' "$routing_reason" | sed "s/'/''/g")'
 ---
 
 ## Question
@@ -1123,7 +1540,8 @@ $question
 
 $output
 "
-    printf "\n${DIM}Saved to knowledge/asks/%s.md${RESET}\n" "$slug"
+        printf "\n${DIM}Saved to knowledge/asks/%s.md${RESET}\n" "$slug"
+    fi
 }
 
 # ─── Review command ──────────────────────────────────────────────────────────
@@ -1285,6 +1703,10 @@ main() {
                 ROUTE_OVERRIDE="${1#*=}"
                 shift
                 ;;
+            --dory)
+                DORY_MODE="1"
+                shift
+                ;;
             *)
                 args+=("$1")
                 shift
@@ -1298,16 +1720,22 @@ main() {
     if [[ $# -eq 0 ]]; then
         printf "${BOLD}Grid Mission Control${RESET}\n\n"
         printf "Usage:\n"
-        printf "  ./mission.sh ask '<question>'         Ask Claude a quick one-off question\n"
+        printf "  ./mission.sh ask '<question>'         Ask a question (conversational)\n"
         printf "  ./mission.sh plan '<description>'     Generate & run a multi-task mission\n"
         printf "  ./mission.sh research '<question>'    Generate & run a research mission\n"
         printf "  ./mission.sh <file>                  Run a mission from JSON file\n"
         printf "  ./mission.sh review <mission-name>    Review a completed mission\n"
         printf "  ./mission.sh status [mission-name]    Show mission status\n"
         printf "  ./mission.sh models                   List available models\n"
+        printf "  ./mission.sh remember '<fact>'        Teach Grid something to remember\n"
+        printf "  ./mission.sh forget [pattern]         View or remove memories\n"
+        printf "  ./mission.sh clear                    Clear conversation history\n"
+        printf "  ./mission.sh learn [mission-slug]     Extract concepts from a mission\n"
+        printf "  ./mission.sh knowledge [query]        Browse or search knowledge base\n"
         printf "\nOptions:\n"
         printf "  --model <name>             Override model (or set MODEL env var)\n"
         printf "  --route-override <backend> Force backend: claude|local (skips router)\n"
+        printf "  --dory                     Ephemeral mode (nothing saved to disk)\n"
         printf "\nRouting:\n"
         printf "  Default model is 'auto' — each task is routed by a local LLM (qwen3:4b).\n"
         printf "  Configure the router in .mission/models.conf: router=ollama run qwen3:4b\n"
@@ -1319,12 +1747,17 @@ main() {
     shift
 
     case "$cmd" in
-        ask)      cmd_ask "$@" ;;
-        plan)     cmd_plan "$@" ;;
-        research) cmd_research "$@" ;;
-        review)   cmd_review "$@" ;;
-        status)   cmd_status "$@" ;;
-        models)   cmd_models ;;
+        ask)        cmd_ask "$@" ;;
+        plan)       cmd_plan "$@" ;;
+        research)   cmd_research "$@" ;;
+        review)     cmd_review "$@" ;;
+        status)     cmd_status "$@" ;;
+        models)     cmd_models ;;
+        remember)   cmd_remember "$@" ;;
+        forget)     cmd_forget "$@" ;;
+        clear)      clear_conversation ;;
+        learn)      cmd_learn "$@" ;;
+        knowledge)  cmd_knowledge "$@" ;;
         *)
             local mission_file
             mission_file="$(resolve_mission_file "$cmd")"

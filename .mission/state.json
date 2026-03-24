@@ -23,5 +23,17 @@
     "competitive-landscape": "failed",
     "procurement-research": "failed",
     "services-to-product-gtm": "failed"
+  },
+  "research-fourier-unified-prd-critique": {
+    "cxl-debug-pain-points": "completed",
+    "competitive-landscape": "completed",
+    "technical-feasibility": "completed",
+    "semiconductor-gtm": "completed",
+    "riskiest-assumptions": "completed",
+    "synthesis": "completed",
+    "gap-analysis": "completed"
+  },
+  "research-nucleus-stress-test": {
+    "market-need-competitor-audit": "running"
   }
 }

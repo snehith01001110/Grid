@@ -1,0 +1,70 @@
+{
+  "timestamp": "2026-03-24T03:13:45Z",
+  "task_id": "cxl-debug-pain-points",
+  "mission": "research-fourier-unified-prd-critique",
+  "prompt_preview": "You are researching whether the pain points assumed in a business plan for an AI-powered CXL/PCIe po",
+  "routed_to": "claude",
+  "reasoning": "Router returned invalid backend 'claude', defaulting to claude",
+  "task_type": "research",
+  "outcome": "completed"
+}
+{
+  "timestamp": "2026-03-24T03:24:40Z",
+  "task_id": "competitive-landscape",
+  "mission": "research-fourier-unified-prd-critique",
+  "prompt_preview": "You are researching the competitive landscape for AI-assisted post-silicon debug tooling as of early",
+  "routed_to": "claude",
+  "reasoning": "Router returned invalid backend 'claude', defaulting to claude",
+  "task_type": "research",
+  "outcome": "completed"
+}
+{
+  "timestamp": "2026-03-24T03:30:16Z",
+  "task_id": "technical-feasibility",
+  "mission": "research-fourier-unified-prd-critique",
+  "prompt_preview": "You are assessing the technical feasibility of using LLMs or AI models to assist with post-silicon d",
+  "routed_to": "claude",
+  "reasoning": "Router returned invalid backend 'claude', defaulting to claude",
+  "task_type": "research",
+  "outcome": "completed"
+}
+{
+  "timestamp": "2026-03-24T03:49:25Z",
+  "task_id": "semiconductor-gtm",
+  "mission": "research-fourier-unified-prd-critique",
+  "prompt_preview": "You are researching how semiconductor companies actually buy and adopt new debug and validation tool",
+  "routed_to": "claude",
+  "reasoning": "Router returned invalid backend 'claude', defaulting to claude",
+  "task_type": "research",
+  "outcome": "completed"
+}
+{
+  "timestamp": "2026-03-24T03:53:28Z",
+  "task_id": "riskiest-assumptions",
+  "mission": "research-fourier-unified-prd-critique",
+  "prompt_preview": "You are performing a pre-mortem on a startup building an AI-powered CXL/PCIe post-silicon debug plat",
+  "routed_to": "claude",
+  "reasoning": "Router returned invalid backend 'claude', defaulting to claude",
+  "task_type": "research",
+  "outcome": "completed"
+}
+{
+  "timestamp": "2026-03-24T03:55:27Z",
+  "task_id": "synthesis",
+  "mission": "research-fourier-unified-prd-critique",
+  "prompt_preview": "You are synthesizing findings from four research tasks about the Fourier Unified AI-powered CXL/PCIe",
+  "routed_to": "claude",
+  "reasoning": "Router returned invalid backend 'claude', defaulting to claude",
+  "task_type": "synthesis",
+  "outcome": "completed"
+}
+{
+  "timestamp": "2026-03-24T03:59:07Z",
+  "task_id": "gap-analysis",
+  "mission": "research-fourier-unified-prd-critique",
+  "prompt_preview": "You are reviewing the completed PRD critique of the Fourier Unified AI-powered CXL/PCIe post-silicon",
+  "routed_to": "claude",
+  "reasoning": "Router returned invalid backend 'claude', defaulting to claude",
+  "task_type": "gap-analysis",
+  "outcome": "completed"
+}

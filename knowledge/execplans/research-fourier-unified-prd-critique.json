@@ -1,0 +1,69 @@
+{
+  "name": "research-fourier-unified-prd-critique",
+  "description": "Research mission: Identify the 3 most critical weaknesses in the Fourier Unified AI-powered CXL/PCIe post-silicon debug platform PRD",
+  "tasks": [
+    {
+      "id": "cxl-debug-pain-points",
+      "name": "Research Real CXL Post-Silicon Debug Pain Points",
+      "milestone": "Research",
+      "type": "research",
+      "prompt": "You are researching whether the pain points assumed in a business plan for an AI-powered CXL/PCIe post-silicon debug platform are real, and what the true priorities of practitioners are (2024–2026).\n\nTarget companies: Montage Technology, XConn Technologies, Panmnesia, Samsung CXL teams, SK Hynix CXL division, Micron Technology CXL group, and hyperscaler silicon teams at Meta, Google, Microsoft, Amazon deploying CXL.\n\nSearch and synthesize findings from:\n- CXL Consortium technical presentations (cxlmemdev.org)\n- Hot Chips 2024–2025 talks on CXL validation/debug\n- ISSCC 2024–2025 papers on CXL/PCIe silicon\n- DesignCon 2025–2026 presentations\n- LinkedIn posts/articles from engineers titled 'Validation Engineer', 'Silicon Debug Engineer', 'Post-Silicon Engineer' at above companies\n- GitHub issues in CXL open-source tooling repos (opencxl-core, Linux CXL driver)\n- Conference Q&A sections\n\nFor each pain point: (1) source, (2) company/team, (3) specific technical or workflow problem, (4) whether existing tools address it, (5) frequency across sources.\n\nDistinguish 'mentioned once' vs 'recurring theme'. Do NOT assume pain points.\n\nConclude: Which assumed PRD pain points are validated by evidence? Which are speculative? What pain points are real but NOT in the PRD?",
+      "expected": "A ranked list of evidenced CXL post-silicon debug pain points with sources, frequency, and a gap-map against PRD assumptions.",
+      "preconditions": []
+    },
+    {
+      "id": "competitive-landscape",
+      "name": "Research AI-Assisted Post-Silicon Debug Tooling Landscape",
+      "milestone": "Research",
+      "type": "research",
+      "prompt": "You are researching the competitive landscape for AI-assisted post-silicon debug tooling as of early 2026. Determine whether any company has already shipped or credibly announced solutions competing with an AI-powered CXL/PCIe debug platform.\n\nResearch the following:\n1. Synopsys — post-silicon debug product lines and AI additions since Jan 2025\n2. Cadence — Palladium, Helium, and any debug automation products\n3. Siemens EDA / Mentor Graphics — Veloce and post-silicon tooling\n4. ProteanTecs — predictive analytics for semiconductor reliability; any post-silicon debug pivot?\n5. ChipAgents — any debug-specific tooling?\n6. Stealth-mode companies hiring for 'AI debug', 'post-silicon AI', 'LLM for silicon validation' on LinkedIn/Greenhouse\n7. Hyperscaler internal tools: Google Brain/DeepMind chip design papers, Meta silicon papers, Microsoft Azure silicon blog\n\nCheck these venues: CXL Dev Days 2025, OCP Summit 2025, DesignCon 2025–2026, DAC 2025, IEEE VLSI Test Symposium 2025.\n\nFor each finding: company, product name, date, what it does, maturity (research/announced/GA), pricing if known, citation.\n\nConclude: Is there a clear AI-powered CXL-specific debug tool already in market? What whitespace exists? What is the realistic moat for a new entrant?",
+      "expected": "A competitive landscape map with named products, maturity levels, and a clear conclusion about whitespace and moat difficulty in AI-assisted CXL debug.",
+      "preconditions": []
+    },
+    {
+      "id": "technical-feasibility",
+      "name": "Assess Technical Feasibility of LLM-Assisted Silicon Debug",
+      "milestone": "Research",
+      "type": "research",
+      "prompt": "You are assessing the technical feasibility of using LLMs or AI models to assist with post-silicon debug of CXL/PCIe devices. The core question: can AI meaningfully accelerate or automate the debug workflow in practice, given the nature of the data and the expertise required?\n\nResearch and answer:\n1. What data is actually available during post-silicon CXL debug? (register dumps, link training logs, protocol traces, analog measurements, proprietary spec sheets) — how structured/unstructured is it?\n2. What has been published on LLMs applied to EDA, hardware design, or silicon validation? Search: DAC 2024–2025, ICCAD 2024–2025, arXiv cs.AR, IEEE papers on 'LLM hardware', 'AI EDA debug'\n3. What are the known failure modes of LLMs on low-data, domain-specific, proprietary technical problems? (hallucination risk, training data gaps, spec confidentiality)\n4. What does 'AI-assisted debug' look like at companies that have tried it internally? (Google TPU team, Apple Silicon, any public postmortems)\n5. What is the realistic timeline to build a working AI debug assistant that handles CXL link training failures — given data scarcity, proprietary specs, and the need for ground truth?\n\nConclude: What is the hardest technical assumption in this PRD? Where does the AI component most likely fail in practice?",
+      "expected": "A technical feasibility assessment identifying the specific AI/ML risks, data availability constraints, and realistic capability ceiling for LLM-assisted CXL debug.",
+      "preconditions": []
+    },
+    {
+      "id": "semiconductor-gtm",
+      "name": "Research GTM and Procurement Dynamics for Semiconductor Debug Tooling",
+      "milestone": "Research",
+      "type": "research",
+      "prompt": "You are researching how semiconductor companies actually buy and adopt new debug and validation tooling, specifically to stress-test the go-to-market assumptions of a startup selling AI-powered debug tools to CXL device makers and hyperscalers.\n\nResearch the following:\n1. How do semiconductor companies (fabless, IDM, hyperscaler silicon teams) evaluate and procure new EDA/validation tools? What is the typical sales cycle length?\n2. What are the approval layers involved in adopting a new tool from an unproven startup? (IT security review, export control, IP leakage concerns, legal, procurement)\n3. What is the standard pricing model for post-silicon debug tools? (seat licenses, project-based, support contracts) — look at Synopsys, Cadence, Mentor pricing models and analyst reports\n4. How have semiconductor tooling startups successfully entered the market? Find 3–5 case studies of companies that went from 0 to first paying customer in silicon validation/EDA (e.g., Tortuga Logic, Metrics Design Automation, Synopsys acquisitions). What was their wedge?\n5. What role do services contracts play? Is there a pattern of services-first → product transition in this space?\n6. What is the realistic time from first customer contact to paid contract at a hyperscaler for a new validation tool?\n\nConclude: What is the most dangerous GTM assumption in a services-to-product plan for this space? What sequencing actually works?",
+      "expected": "A GTM reality check covering procurement friction, sales cycle length, pricing norms, and 3–5 case studies of how semiconductor tooling startups actually got their first customers.",
+      "preconditions": []
+    },
+    {
+      "id": "riskiest-assumptions",
+      "name": "Identify and Stress-Test the 5 Riskiest Assumptions",
+      "milestone": "Research",
+      "type": "research",
+      "prompt": "You are performing a pre-mortem on a startup building an AI-powered CXL/PCIe post-silicon debug platform. Your job is to identify and stress-test the 5 riskiest assumptions embedded in the product and business plan.\n\nThe product: An AI-assisted debug platform that ingests CXL link training logs, register dumps, and protocol traces to suggest root causes and accelerate debug cycles for CXL device validation teams.\n\nFor each assumption you identify:\n1. State the assumption explicitly (what must be true for the plan to work)\n2. Rate fragility: High / Medium / Low (how likely is this assumption to be wrong)\n3. Evidence for fragility: concrete reasons, analogous failures, or structural constraints\n4. Kill scenario: If this assumption is wrong, exactly how does the company fail?\n5. Mitigation: What early experiment or signal could validate/invalidate this assumption within 60 days?\n\nFocus on assumptions across these categories:\n- Technical: AI can interpret proprietary CXL debug data without full spec access\n- Data: Enough labeled debug cases exist to train/fine-tune a useful model\n- Market timing: CXL adoption is at the right inflection point\n- GTM: A services-first model will convert to product revenue\n- Team/moat: Domain expertise is defensible against larger incumbents\n\nConclude: Which single assumption, if wrong, kills the company fastest? What is the cheapest experiment to test it?",
+      "expected": "A ranked list of 5 riskiest assumptions with fragility ratings, kill scenarios, and 60-day validation experiments for each.",
+      "preconditions": []
+    },
+    {
+      "id": "synthesis",
+      "name": "Synthesize Critical Weaknesses and Actionable Fixes",
+      "milestone": "Synthesis",
+      "type": "synthesis",
+      "prompt": "You are synthesizing findings from four research tasks about the Fourier Unified AI-powered CXL/PCIe post-silicon debug platform PRD. Your job is to produce a rigorous structured critique in the exact format below.\n\nUse findings from:\n- cxl-debug-pain-points: Evidence for/against assumed pain points\n- competitive-landscape: Whitespace map and moat analysis\n- technical-feasibility: LLM capability ceiling and data risks\n- semiconductor-gtm: Procurement friction and GTM sequencing\n- riskiest-assumptions: Pre-mortem on fragile assumptions\n\nOutput the following format EXACTLY:\n\n**SYSTEM SUMMARY** (5–7 bullets)\nWhat this product actually is, cut through any fluff.\n\n**TOP 3 CRITICAL ISSUES**\nFor each issue:\n- Issue #N: [Clear name]\n- Why this is a real problem: Concrete explanation with engineering/GTM/infra/UX specifics and where it breaks in practice\n- Evidence / reasoning: Comparable systems, constraints, or missing pieces from research\n- Impact if unsolved: Specific failure mode\n- Fix / Improvement: Specific actionable change (architecture, scope, sequencing, or pivot) — not vague\n\n**PRIORITIZATION**\nRank the 3 issues #1 (highest risk) to #3. Explain why #1 kills fastest.\n\n**IMPROVED DIRECTION**\n- REMOVE: What to cut\n- FOCUS ON: What to double down on\n- CORE WEDGE: The sharpest version of this product worth building\n\n**FINAL VERDICT**\nOne of: 'Viable with focused changes' / 'Needs significant pivot' / 'Unlikely to work'\n2–3 sentence justification grounded in the research findings.",
+      "expected": "A complete structured PRD critique with 3 critical issues, prioritization, improved direction, and final verdict — all grounded in the research findings.",
+      "preconditions": ["cxl-debug-pain-points", "competitive-landscape", "technical-feasibility", "semiconductor-gtm", "riskiest-assumptions"]
+    },
+    {
+      "id": "gap-analysis",
+      "name": "Identify What the PRD Critique Still Doesn't Answer",
+      "milestone": "Gap Analysis",
+      "type": "gap-analysis",
+      "prompt": "You are reviewing the completed PRD critique of the Fourier Unified AI-powered CXL/PCIe post-silicon debug platform. Your job is to identify what critical questions the critique does NOT answer — gaps that would need to be resolved before a founder could act with confidence.\n\nFor each gap:\n1. State the unanswered question precisely\n2. Explain why it matters to the go/no-go decision\n3. Propose the fastest way to answer it (interview, prototype, paper, pilot contract, etc.)\n\nFocus on gaps across:\n- Customer discovery: Which specific teams/roles at which companies are the real buyers vs. users vs. blockers?\n- Technical unknowns: What would a prototype reveal that desktop research cannot?\n- Competitive intelligence: What might incumbents announce in the next 6 months that would change the picture?\n- Regulatory/IP: Are there export control, NDA, or IP licensing constraints that weren't surfaced?\n- Founder-market fit: What credentials or relationships does the team need that aren't addressed?\n\nConclude with: The 3 most important questions that, if answered, would most change the recommended direction.",
+      "expected": "A ranked list of open questions with explanations of why each matters and how to answer it cheaply, concluding with the 3 highest-leverage unknowns.",
+      "preconditions": ["synthesis"]
+    }
+  ]
+}

@@ -1,4 +1,44 @@
 ---
+status: completed
+milestone: Research
+date: 2026-03-23
+type: research
+model: claude
+tags: [#research]
+confidence: medium
+router_decision: claude
+router_reasoning: 'Router returned invalid backend ''claude'', defaulting to claude'
+---
+
+## Task Description
+
+You are performing a pre-mortem on a startup building an AI-powered CXL/PCIe post-silicon debug platform. Your job is to identify and stress-test the 5 riskiest assumptions embedded in the product and business plan.
+
+The product: An AI-assisted debug platform that ingests CXL link training logs, register dumps, and protocol traces to suggest root causes and accelerate debug cycles for CXL device validation teams.
+
+For each assumption you identify:
+1. State the assumption explicitly (what must be true for the plan to work)
+2. Rate fragility: High / Medium / Low (how likely is this assumption to be wrong)
+3. Evidence for fragility: concrete reasons, analogous failures, or structural constraints
+4. Kill scenario: If this assumption is wrong, exactly how does the company fail?
+5. Mitigation: What early experiment or signal could validate/invalidate this assumption within 60 days?
+
+Focus on assumptions across these categories:
+- Technical: AI can interpret proprietary CXL debug data without full spec access
+- Data: Enough labeled debug cases exist to train/fine-tune a useful model
+- Market timing: CXL adoption is at the right inflection point
+- GTM: A services-first model will convert to product revenue
+- Team/moat: Domain expertise is defensible against larger incumbents
+
+Conclude: Which single assumption, if wrong, kills the company fastest? What is the cheapest experiment to test it?
+
+## Expected Behavior
+
+A ranked list of 5 riskiest assumptions with fragility ratings, kill scenarios, and 60-day validation experiments for each.
+
+## Findings / Output
+
+---
 
 # Pre-Mortem: AI-Powered CXL/PCIe Post-Silicon Debug Platform
 ## The 5 Riskiest Assumptions
@@ -172,3 +212,10 @@ The other assumptions can be partially mitigated: the technical limitation can b
 ---
 
 *Research completed March 23, 2026. All sources cited inline. Four parallel research tracks synthesized: CXL debug pain points (30+ sources), competitive landscape (50+ sources), technical feasibility (20+ sources), semiconductor GTM (40+ sources).*
+
+## Validation Result
+
+Output length: 31541 chars
+
+## My Notes
+<!-- Write below this line. The harness reads this on re-run. Use #redo to re-run this task, #skip to skip it, #pivot:<new direction> to change the approach. -->

@@ -1,0 +1,7 @@
+{"q": "heyy", "a": "Hey! How can I assist you today? \ud83d\ude0a"}
+{"q": "my name is snehith", "a": "Hey, Snehith! \ud83d\ude0a Nice to meet you! How can I assist you today? Let me know if you need help with anything! \ud83c\udf1f"}
+{"q": "heyy", "a": "Hey, Snehith! \ud83d\ude0a How are you doing today? Let me know if there's anything I can help you with! \ud83c\udf1f"}
+{"q": "what is my name?", "a": "Your name is **Snehith**! \ud83d\ude0a Let me know if there's anything I can assist you with today! \ud83c\udf1f"}
+{"q": "heyy", "a": "Error: OPENAI_API_KEY environment variable not set.\nAdd it to your shell profile: export OPENAI_API_KEY='sk-...'"}
+{"q": "heyy", "a": "OpenAI error: Error code: 429 - {'error': {'message': 'You exceeded your current quota, please check your plan and billing details. For more information on this error, read the docs: https://platform.openai.com/docs/guides/error-codes/api-errors.', 'type': 'insufficient_quota', 'param': None, 'code': 'insufficient_quota'}}"}
+{"q": "heyy", "a": "OpenAI error: Error code: 429 - {'error': {'message': 'You exceeded your current quota, please check your plan and billing details. For more information on this error, read the docs: https://platform.openai.com/docs/guides/error-codes/api-errors.', 'type': 'insufficient_quota', 'param': None, 'code': 'insufficient_quota'}}"}

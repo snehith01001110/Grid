@@ -15,7 +15,20 @@
       "Bash(bash mission.sh hac-mvp)",
       "Bash(bash mission.sh status hac-mvp)",
       "Bash(bash /Users/nayak/Documents/Grid/mission.sh)",
-      "Bash(bash /Users/nayak/Documents/Grid/mission.sh models 2>&1)"
+      "Bash(bash /Users/nayak/Documents/Grid/mission.sh models 2>&1)",
+      "Bash(source ~/.zshrc)",
+      "Bash(/Users/nayak/Documents/Grid/.venv/bin/python3 /Users/nayak/Documents/Grid/mission-tui.py --help)",
+      "Bash(echo \"exit: $?\")",
+      "Bash(/Users/nayak/Documents/Grid/.venv/bin/python3 -c \"import py_compile; py_compile.compile\\(''/Users/nayak/Documents/Grid/mission-tui.py'', doraise=True\\); print\\(''OK''\\)\")",
+      "Bash(/Users/nayak/Documents/Grid/.venv/bin/python3 -c \"from textual.timer import Timer; print\\(''Timer import OK''\\)\")",
+      "Bash(/Users/nayak/Documents/Grid/.venv/bin/python3 -c \":*)",
+      "Bash(timeout 5 /Users/nayak/Documents/Grid/.venv/bin/python3 /Users/nayak/Documents/Grid/mission-tui.py)",
+      "Bash(gtimeout 5 /Users/nayak/Documents/Grid/.venv/bin/python3 /Users/nayak/Documents/Grid/mission-tui.py)",
+      "Bash(/Users/nayak/Documents/Grid/.venv/bin/pip install:*)",
+      "Bash(/Users/nayak/Documents/Grid/.venv/bin/python3 -c \"import psutil; print\\(f''CPU: {psutil.cpu_percent\\(\\)}%  RAM: {psutil.virtual_memory\\(\\).percent}%''\\)\")",
+      "Bash(python3 -m json.tool)",
+      "Bash(/Users/nayak/Documents/Grid/.venv/bin/python3 -c \"import psutil; print\\(psutil.cpu_percent\\(interval=0.1\\), psutil.virtual_memory\\(\\).percent\\)\")",
+      "Bash(/Users/nayak/Documents/Grid/.venv/bin/python3 -c \"import psutil; print\\(''first:'', psutil.cpu_percent\\(interval=None\\)\\); import time; time.sleep\\(0.1\\); print\\(''second:'', psutil.cpu_percent\\(interval=None\\)\\)\")"
     ]
   }
 }

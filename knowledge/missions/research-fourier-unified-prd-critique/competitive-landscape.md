@@ -1,3 +1,40 @@
+---
+status: completed
+milestone: Research
+date: 2026-03-23
+type: research
+model: claude
+tags: [#research]
+confidence: medium
+router_decision: claude
+router_reasoning: 'Router returned invalid backend ''claude'', defaulting to claude'
+---
+
+## Task Description
+
+You are researching the competitive landscape for AI-assisted post-silicon debug tooling as of early 2026. Determine whether any company has already shipped or credibly announced solutions competing with an AI-powered CXL/PCIe debug platform.
+
+Research the following:
+1. Synopsys — post-silicon debug product lines and AI additions since Jan 2025
+2. Cadence — Palladium, Helium, and any debug automation products
+3. Siemens EDA / Mentor Graphics — Veloce and post-silicon tooling
+4. ProteanTecs — predictive analytics for semiconductor reliability; any post-silicon debug pivot?
+5. ChipAgents — any debug-specific tooling?
+6. Stealth-mode companies hiring for 'AI debug', 'post-silicon AI', 'LLM for silicon validation' on LinkedIn/Greenhouse
+7. Hyperscaler internal tools: Google Brain/DeepMind chip design papers, Meta silicon papers, Microsoft Azure silicon blog
+
+Check these venues: CXL Dev Days 2025, OCP Summit 2025, DesignCon 2025–2026, DAC 2025, IEEE VLSI Test Symposium 2025.
+
+For each finding: company, product name, date, what it does, maturity (research/announced/GA), pricing if known, citation.
+
+Conclude: Is there a clear AI-powered CXL-specific debug tool already in market? What whitespace exists? What is the realistic moat for a new entrant?
+
+## Expected Behavior
+
+A competitive landscape map with named products, maturity levels, and a clear conclusion about whitespace and moat difficulty in AI-assisted CXL debug.
+
+## Findings / Output
+
 # AI-Assisted Post-Silicon Debug Tooling: Competitive Landscape Report
 **Date:** March 23, 2026 | Scope: AI-powered CXL/PCIe debug platforms
 
@@ -282,3 +319,10 @@ The closest adjacent products fall into two non-overlapping buckets:
 ---
 
 *All sources cited inline above. Research conducted March 23, 2026.*
+
+## Validation Result
+
+Output length: 22840 chars
+
+## My Notes
+<!-- Write below this line. The harness reads this on re-run. Use #redo to re-run this task, #skip to skip it, #pivot:<new direction> to change the approach. -->

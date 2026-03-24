@@ -1,3 +1,3 @@
-# Mission Feedback: Fourier AI Debug Platform - Stress Test & Rebuild
+# Mission Feedback: research-fourier-unified-prd-critique
 
 <!-- Write global steering notes here. This content is prepended to EVERY task prompt on re-run. -->

@@ -1,0 +1,271 @@
+---
+status: completed
+milestone: Gap Analysis
+date: 2026-03-23
+type: gap-analysis
+model: claude
+tags: [#research]
+confidence: low
+router_decision: claude
+router_reasoning: 'Router returned invalid backend ''claude'', defaulting to claude'
+---
+
+## Task Description
+
+You are reviewing the completed PRD critique of the Fourier Unified AI-powered CXL/PCIe post-silicon debug platform. Your job is to identify what critical questions the critique does NOT answer — gaps that would need to be resolved before a founder could act with confidence.
+
+For each gap:
+1. State the unanswered question precisely
+2. Explain why it matters to the go/no-go decision
+3. Propose the fastest way to answer it (interview, prototype, paper, pilot contract, etc.)
+
+Focus on gaps across:
+- Customer discovery: Which specific teams/roles at which companies are the real buyers vs. users vs. blockers?
+- Technical unknowns: What would a prototype reveal that desktop research cannot?
+- Competitive intelligence: What might incumbents announce in the next 6 months that would change the picture?
+- Regulatory/IP: Are there export control, NDA, or IP licensing constraints that weren't surfaced?
+- Founder-market fit: What credentials or relationships does the team need that aren't addressed?
+
+Conclude with: The 3 most important questions that, if answered, would most change the recommended direction.
+
+## Expected Behavior
+
+A ranked list of open questions with explanations of why each matters and how to answer it cheaply, concluding with the 3 highest-leverage unknowns.
+
+## Findings / Output
+
+Here is the gap analysis for the completed PRD critique, followed by a follow-up mission JSON.
+
+---
+
+## GAP ANALYSIS: What the Critique Still Doesn't Answer
+
+---
+
+### CUSTOMER DISCOVERY GAPS
+
+**Gap 1: Buyer identity is company-level, not role-level**
+
+*Unanswered question:* At Astera Labs, XConn, or Montage Technology specifically — who signs a $75–150K tool contract? VP of Engineering? Director of Silicon Validation? CTO? Head of Customer Solutions Engineering?
+
+*Why it matters:* The sales motion is entirely different depending on who the economic buyer is. A Director of Validation cares about engineer-hours saved and can sponsor a PoC from a departmental budget. A CTO cares about competitive differentiation and requires board-level justification. A procurement committee requires 18–24 months. The critique recommends "target Tier-2 fabless" without knowing whether those companies have a validation-tools budget line at all.
+
+*Fastest path:* 6–8 LinkedIn-sourced cold outreach interviews with job titles "Director of Silicon Validation", "VP of Post-Silicon Engineering", and "Head of Hardware Validation" at the named Tier-2 companies. Offer a $100 Amazon gift card. Budget: ~3 weeks.
+
+---
+
+**Gap 2: Validation team headcount at target customers is unknown**
+
+*Unanswered question:* How many validation engineers does a Tier-2 fabless CXL company actually have? If the answer is 2–5 engineers, a $150K/year license is 30–75% of their total compensation budget for that function and is a non-starter. If it's 20–40, the economics work.
+
+*Why it matters:* TAM math in the critique ($3–9M ARR from 15–30 CXL validation teams × $100–300K) is plausible only if those teams have headcount large enough to justify the price. A $100K tool replacing one engineer-month per quarter is different from a $100K tool replacing 10 engineer-minutes per day.
+
+*Fastest path:* LinkedIn headcount analysis: search for employees at Astera Labs, XConn, Montage with "validation" or "post-silicon" in title. Cross-reference against company size and funding stage. 2–3 days of structured search.
+
+---
+
+**Gap 3: The role of the internal "tool blocker" was never surfaced**
+
+*Unanswered question:* In semiconductor companies, who has veto power over adopting a new external tool — specifically one that ingests proprietary trace data? Is it the CISO? Legal? IT Security? A named internal champion can overcome this, but the critique never identifies the blocker profile or how past startups navigated it.
+
+*Why it matters:* Every successful EDA startup case study mentions the internal champion, but none describe how to defuse the blocker — who is structurally incentivized to say no to any new external data-handling tool. If the CISO at Astera Labs requires 9 months of security review before any tool can touch device trace data, the "paid PoC in 3 months" recommendation is already broken.
+
+*Fastest path:* 3–4 interviews with former EDA startup salespeople who sold into semiconductor companies within the last 5 years. Ask specifically: "Who killed the deal, and what did they say?" This is a 2-week effort.
+
+---
+
+### TECHNICAL UNKNOWNS
+
+**Gap 4: The actual engineer workflow has never been observed**
+
+*Unanswered question:* Step by step, what does a CXL bring-up engineer actually do during a validation session? How much time is spent on spec lookup vs. register interpretation vs. cross-referencing known errata vs. writing test scripts vs. waiting for hardware?
+
+*Why it matters:* The critique claims the workflow automation product "saves engineers 40–60% of bring-up time on the structured checklist portion." This figure is ungrounded. If the structured checklist portion is only 15% of total bring-up time (with the rest being hands-on debugging that requires novel inference), the addressable pain with current technology is too small to justify $150K/year.
+
+*Fastest path:* 5 job-shadow sessions (2–3 hours each) with CXL bring-up engineers at willing companies. The CXL Consortium ecosystem has academic partners (USC, Stanford, CMU) who run public CXL testbeds — a researcher affiliation provides access. 4–6 weeks.
+
+---
+
+**Gap 5: Minimum viable prototype has never been tested with a real engineer**
+
+*Unanswered question:* Can a RAG tool grounded in CXL 3.x public specs actually answer the questions engineers ask during bring-up — or do the real questions all require NDA-gated vendor PHY knowledge?
+
+*Why it matters:* The entire Phase 1 pivot ("build spec Q&A and checklist tool first") rests on the assumption that a meaningful fraction of real engineer questions are answerable from the public spec corpus. If a 3-hour test with 5 engineers reveals that 80% of their real questions hit the NDA wall, Phase 1 has no traction and the business has no runway to reach Phase 2.
+
+*Fastest path:* Build a minimal RAG prototype (Claude API + CXL spec PDFs, 2–3 engineer-days) and run a structured user test with 5 engineers from the CXL open-source community (Linux CXL driver contributors are identifiable on GitHub). Measurable output: % of questions answered satisfactorily without NDA-gated data. 3–4 weeks total.
+
+---
+
+**Gap 6: Actual labeled failure corpus size at reference companies was never confirmed**
+
+*Unanswered question:* The critique estimates "50–200 labeled failures per product generation" per team. Has anyone verified this with an actual CXL validation engineer? The real number determines whether the federated data strategy (collect anonymized failures in exchange for free tool access) is feasible within a 3-year window or requires a 10-year one.
+
+*Why it matters:* If the real number is 20–50 failures per generation (the pessimistic case for a company on its first CXL product), reaching 2,000 labeled failures requires 40–100 company-generations of data — which may take 8–12 years at current industry cadence, not 3. The data flywheel timeline is the single most load-bearing assumption in the pivot strategy.
+
+*Fastest path:* Ask directly in 8–10 customer discovery calls: "How many distinct root-cause-labeled CXL link failures have you documented in the last 2 product generations?" This is a non-sensitive question that most engineers will answer honestly.
+
+---
+
+### COMPETITIVE INTELLIGENCE GAPS
+
+**Gap 7: Synopsys and Cadence internal roadmaps for post-silicon AI were not surfaced**
+
+*Unanswered question:* Are Synopsys, Cadence, or Siemens EDA currently building AI-powered post-silicon debug features that would close the gap within 12–18 months? The critique confirms no product exists today — but their AI investments (Synopsys.ai, Cadence.AI) are active and their sales channels already reach every target customer.
+
+*Why it matters:* If either EDA incumbent ships a CXL-compatible AI debug feature as part of their existing tool licenses, the startup's window closes before its first commercial contract. The critique says "no competitor occupies the exact product category" — but this is a 2026-03-23 snapshot, not a forward-looking assessment.
+
+*Fastest path:* Attend or review recordings from DAC 2025 and ICCAD 2025 product announcements. Track job postings at Synopsys and Cadence for "post-silicon AI", "CXL debug", "AI validation". Review their recent patent filings (USPTO public search) for CXL-adjacent AI debug methods. 1–2 weeks.
+
+---
+
+**Gap 8: Whether DARPA/DoD funding is available and unclaimed was never verified**
+
+*Unanswered question:* The pivot strategy recommends a DARPA research contract as the primary data-collection funding mechanism. Has anyone confirmed that (a) a relevant program exists or is being solicited, (b) no incumbent has already claimed it, and (c) the founding team has the credentials to win it?
+
+*Why it matters:* DARPA ERI and CHIPS R&D programs fund semiconductor reliability and validation research — but they are competitive, require specific BAA alignment, and strongly favor applicants with prior DARPA history or academic affiliation. If the relevant program was awarded 18 months ago to a university lab, the "DARPA-funded data collection" strategy has no concrete path.
+
+*Fastest path:* Search SAM.gov and DARPA.mil for active and recently closed BAAs in microelectronics reliability and post-silicon validation. Talk to one DARPA PM (achievable via a warm intro from any ERI Phase 1 recipient). 1 week.
+
+---
+
+### REGULATORY / IP GAPS
+
+**Gap 9: Export control and ITAR exposure for a CXL debug data tool was never analyzed**
+
+*Unanswered question:* CXL-enabled compute is used in HPC systems with potential military and intelligence community applications. Does a tool that ingests register dumps and FLIT-level traces from these systems constitute a controlled technology transfer if accessed remotely or processed offshore? Is there an EAR/ITAR exposure in the SaaS deployment model?
+
+*Why it matters:* A single export control issue discovered after the first hyperscaler pilot could terminate the contract and trigger a legal hold that freezes the company for 12–18 months. The on-premise deployment requirement (which the critique acknowledges) isn't merely a technical preference — it may be a legal necessity that eliminates the SaaS margin model entirely.
+
+*Fastest path:* One 2-hour consultation with an export control attorney who has semiconductor industry experience. Cost: $500–1,500. This is the cheapest insurance against a company-killing legal surprise.
+
+---
+
+**Gap 10: The data licensing model has no confirmed legal precedent**
+
+*Unanswered question:* Has any company successfully negotiated a "anonymized failure telemetry in exchange for free tool access" agreement with a semiconductor company? What are the standard terms, and which legal structures (data processing agreements, IP ownership clauses, indemnification) are required to make a semiconductor legal team approve it?
+
+*Why it matters:* The data flywheel is the entire long-term competitive moat. If the legal structure for collecting this data is unworkable — because semiconductor companies require full data ownership, no third-party retention, and indemnification that a startup cannot provide — the flywheel never starts. The critique proposes this mechanism without legal validation.
+
+*Fastest path:* Review the data sharing agreements from comparable programs: the OCP's hardware reliability data sharing initiative, JEDEC's failure data standardization work, and the CXL Consortium's own IP policy. Then a 1-hour call with a technology licensing attorney. 1–2 weeks.
+
+---
+
+**Gap 11: Liability when the AI gives a wrong diagnosis was not addressed**
+
+*Unanswered question:* If the AI assistant incorrectly diagnoses a CXL link failure, the customer ships a defective product, and a recall or OEM penalty follows — who is liable? Does the software license's limitation of liability clause hold up in semiconductor contracts, where consequential damages from a missed failure can be $10M+?
+
+*Why it matters:* Semiconductor companies will ask this question before signing any contract. If the answer is unclear or the founder hasn't thought about it, the deal dies in legal review. Additionally, liability exposure shapes the product design: a tool that says "here are possible causes" needs different disclaimer language than one that says "this is the root cause."
+
+*Fastest path:* Review standard EDA tool EULA language from Synopsys/Cadence for how incumbents handle this. Have a technology attorney review the proposed license template. 1–2 weeks.
+
+---
+
+### FOUNDER-MARKET FIT GAPS
+
+**Gap 12: Founding team credentials were never evaluated**
+
+*Unanswered question:* Does the founding team have (a) prior CXL or PCIe silicon bring-up experience, (b) existing relationships at the target Tier-2 fabless companies, (c) experience winning DARPA grants, and (d) security-posture credibility for SOC 2? The critique recommends starting SOC 2 "immediately" and applying for DARPA grants without knowing if the team can execute either.
+
+*Why it matters:* In a trust-based, expert-community market like semiconductor validation, "cold outreach from a first-time founder with no silicon background" will not get past the front desk. The critique's GTM recommendations assume a founder who can walk into Astera Labs and be taken seriously as a peer. If the team is AI engineers without silicon validation experience, the entire GTM approach requires a different first step.
+
+*Fastest path:* Not a research question — a self-assessment the founding team must conduct honestly. But the answer shapes whether the right next step is recruiting a CXL industry co-founder vs. pursuing academic partnerships vs. hiring a technical advisor from the CXL Consortium.
+
+---
+
+**Gap 13: Strategic acquirer landscape and realistic exit valuation were never modeled**
+
+*Unanswered question:* If the company executes the pivot (workflow automation, PCIe-native, 3 Tier-2 fabless customers at $150K/year), what is the realistic exit — and to whom? Keysight, Teledyne LeCroy, Synopsys, Cadence, and Broadcom are all logical strategic acquirers. But at what revenue or strategic value would they pay, and what would they pay?
+
+*Why it matters:* The critique says the realistic outcome is "acquisition at distressed valuation" if the company stalls — but doesn't model the upside acquisition scenario. If a startup with $3M ARR, strong customer relationships, and 500 labeled failures in a proprietary database is worth $25–50M to Keysight as a CXL debug software bolt-on, the business case for investors looks very different than a build-to-$100M-ARR story. The exit model shapes how much to raise and at what valuation.
+
+*Fastest path:* Research recent semiconductor tooling acquisitions (Synopsys acquisitions 2020–2025, Keysight acquisitions, Teledyne acquisitions) for deal size relative to ARR at time of acquisition. 3–5 days of research.
+
+---
+
+## THE 3 MOST IMPORTANT QUESTIONS
+
+**#1: What fraction of real CXL bring-up engineer time is spent on tasks addressable with current technology (spec lookup, structured checklists, known-failure pattern matching) vs. tasks that require the AI we cannot yet build (novel failure diagnosis)?**
+
+This question determines whether the proposed pivot is a real business or a distraction. If the addressable fraction is <20%, the workflow automation product saves each engineer 2–3 hours per week — not enough to justify $150K/year. If it's >40%, the product creates genuine value and the DARPA-funded path to diagnosis capability becomes a credible upsell. No amount of desktop research can answer this. It requires job-shadow access to 5 working engineers. The answer could flip the recommended direction from "build and sell now" to "consult until the data problem is solved."
+
+**#2: Will a Tier-2 fabless CXL company (Astera Labs, XConn, or Montage) pay $75–150K/year for a bring-up automation tool, and who would actually sign that contract?**
+
+This is the entire commercial thesis of the pivot strategy, and it is currently unvalidated. The critique names these companies as the right first customers but has no evidence of willingness to pay, budget availability, or buyer identity. If 8–10 customer discovery calls reveal that these companies either (a) have internal tools that already do this, (b) have no tools budget, or (c) require 18-month procurement cycles even at Tier-2, the pivot strategy needs another pivot. This question can be answered in 3–4 weeks and costs almost nothing.
+
+**#3: Is there an active DARPA or CHIPS R&D program that funds AI-assisted post-silicon validation, is it available to a new entrant, and does the founding team have the credentials to win it?**
+
+The DARPA-funded data collection strategy is the only proposed mechanism for building the training corpus without a commercial data flywheel. If this path doesn't exist or isn't accessible to this team, the long-term AI diagnosis capability has no funding path other than venture capital — which means raising a Series B on a product that can't yet do what it's supposed to do. This question can be answered in 1 week and is the single cheapest high-leverage research act available to the founding team right now.
+
+---
+
+## FOLLOW-UP MISSION JSON
+
+```json
+{
+  "name": "fourier-prd-gap-validation",
+  "description": "Validate the 3 highest-leverage unknowns from the Fourier CXL/PCIe debug PRD critique gap analysis: engineer workflow time allocation, Tier-2 fabless willingness to pay, and DARPA/CHIPS program availability.",
+  "tasks": [
+    {
+      "id": "engineer-workflow-time-allocation",
+      "name": "Map CXL Bring-Up Engineer Workflow and Time Allocation",
+      "milestone": "Customer Discovery",
+      "type": "research",
+      "prompt": "You are researching how CXL and PCIe post-silicon bring-up engineers actually spend their time during a validation session. The specific question: what fraction of bring-up time is spent on tasks addressable with current AI/automation technology (spec lookup, structured checklist execution, known-failure pattern matching) vs. tasks requiring novel inference (debugging genuinely new failure modes)?\n\nSearch for:\n1. Conference talks or papers describing the CXL bring-up workflow step by step — DesignCon 2024–2026, CXL DevCon 2023–2025, OCP Summit 2024–2025, Hot Chips 2024\n2. Any published time-motion studies or workflow analyses for post-silicon validation (IEEE VLSI Test Symposium, ITC proceedings 2022–2025)\n3. LinkedIn posts, engineering blogs, or Reddit/HackerNews discussions from CXL or PCIe validation engineers describing their daily work\n4. GitHub README files or documentation in CXL open-source tooling repos (opencxl-core, linux/drivers/cxl, cxl-diag) describing typical usage patterns\n5. Job descriptions for 'CXL Validation Engineer' or 'PCIe Post-Silicon Debug Engineer' — what tasks are listed, and in what order?\n\nFor each source: (1) citation, (2) workflow steps described, (3) any time estimates, (4) which steps are described as the biggest bottleneck.\n\nConclude: What fraction of bring-up work is structured/repeatable vs. novel/inference-heavy? What is the evidence quality for this estimate? What can't be determined without direct observation?",
+      "expected": "A workflow map of CXL bring-up activities with time allocation estimates and evidence quality ratings, plus a clear statement of what requires primary research (job-shadowing) to confirm.",
+      "preconditions": []
+    },
+    {
+      "id": "tier2-fabless-willingness-to-pay",
+      "name": "Research Tier-2 Fabless CXL Company Tooling Budgets and Procurement Patterns",
+      "milestone": "Customer Discovery",
+      "type": "research",
+      "prompt": "You are researching whether Tier-2 fabless semiconductor companies building CXL devices (Astera Labs, XConn Technologies, Montage Technology, Panmnesia, IntelliProp) have the budget, structure, and procurement process to be first customers for a $75–150K/year bring-up automation tool.\n\nResearch the following:\n1. Company size and engineering headcount for each named company — specifically how many employees have 'validation', 'post-silicon', or 'hardware debug' in their title (LinkedIn search)\n2. Funding stage and total raised for each company — do they have the financial runway to budget $150K/year for tooling?\n3. What EDA and validation tools do they currently use — look for job descriptions listing required tool experience, any mentions in papers or press releases\n4. Are there any public mentions of their bring-up tooling stack, test methodology, or debug infrastructure? (Conference papers, white papers, CXL Consortium submissions)\n5. Procurement precedents: have any of these companies publicly partnered with or licensed tools from small startups? Check press releases, CrunchBase partnerships, LinkedIn company updates\n6. What is the typical EDA/tooling spend as % of revenue or headcount at a 50–300 person fabless company? Find any analyst data, Gartner/IDC reports, or founder interviews addressing this\n\nConclude: Which of these companies is most likely to be a first commercial customer based on size, funding, and tooling sophistication? What is a realistic price point? What is the likely decision-maker title?",
+      "expected": "A ranked list of Tier-2 fabless CXL companies by likelihood of being a first commercial customer, with evidence for each ranking, and a realistic price range and buyer title hypothesis.",
+      "preconditions": []
+    },
+    {
+      "id": "darpa-chips-program-availability",
+      "name": "Identify Available DARPA and CHIPS R&D Funding for AI-Assisted Post-Silicon Validation",
+      "milestone": "Funding Strategy",
+      "type": "research",
+      "prompt": "You are researching whether there are active or upcoming U.S. government funding programs (DARPA, CHIPS R&D Office, NSF, IARPA) that would fund AI-assisted post-silicon debug or CXL/PCIe reliability research, and whether these programs are accessible to a new startup.\n\nSearch and analyze:\n1. SAM.gov: active and recently closed Broad Agency Announcements (BAAs) with keywords 'post-silicon', 'hardware validation', 'semiconductor reliability', 'AI EDA', 'PCIe debug', 'CXL validation'\n2. DARPA.mil: current programs in the Microsystems Technology Office (MTO) and Defense Sciences Office (DSO) relevant to semiconductor validation or AI-assisted hardware debug — specifically ERI 2.0, LUMOS, COSMOS, or successor programs\n3. CHIPS R&D Office (nist.gov/chips): active funding opportunities related to advanced packaging, memory, or compute validation\n4. NSF: recent awards in 'computer-aided design', 'hardware validation', 'LLM for EDA' — search NSF Award Search\n5. Recent DARPA ERI Phase 1 and Phase 2 awardees in semiconductor design automation — who received funding, for what, and is there overlap with the proposed product?\n6. Academic labs currently funded for AI-assisted hardware validation (MIT CSAIL, Stanford EE, CMU ECE, Georgia Tech) — are they building something that would compete or that could be licensed?\n\nFor each finding: program name, solicitation number or URL, topic relevance, deadline if open, typical award size, eligibility requirements (academic only vs. small business), and whether the space appears already claimed.\n\nConclude: Is there a viable government funding path for building an AI-assisted CXL/PCIe debug data corpus? What is the most promising specific program, and what would a credible application require?",
+      "expected": "A list of specific government funding opportunities with relevance ratings, deadlines, award sizes, and eligibility notes, concluding with a go/no-go assessment of the DARPA-funded data strategy.",
+      "preconditions": []
+    },
+    {
+      "id": "incumbent-roadmap-signals",
+      "name": "Detect Incumbent AI Post-Silicon Debug Roadmap Signals",
+      "milestone": "Competitive Intelligence",
+      "type": "research",
+      "prompt": "You are detecting early signals that Synopsys, Cadence, Siemens EDA, Keysight, or Teledyne LeCroy are building AI-powered post-silicon debug capabilities that would close the whitespace identified in the Fourier PRD critique within 12–18 months.\n\nLook for:\n1. Job postings at Synopsys, Cadence, Siemens EDA with titles or descriptions mentioning 'post-silicon AI', 'CXL validation', 'AI debug', 'LLM hardware', or 'validation ML' — check LinkedIn, Greenhouse, Lever, Workday career pages\n2. Recent patent filings (2024–2026) from these companies at USPTO.gov for AI-assisted post-silicon debug, CXL validation automation, or ML-based failure diagnosis in hardware — search by assignee\n3. DAC 2025, ICCAD 2025, DesignCon 2026 product announcements or papers from these vendors specifically about post-silicon AI or CXL debug automation\n4. Synopsys.ai, Cadence.AI, and Siemens Xcelerator AI product page changes since Jan 2025 — do any mention post-silicon, bring-up, or CXL?\n5. Acquisitions or acqui-hires by these companies in 2024–2025 of smaller validation or AI companies\n6. LinkedIn activity from employees at these companies in 'Post-Silicon Engineering', 'Validation Products', or 'AI/ML Platform' divisions — any public posts hinting at new product directions?\n\nFor each signal: company, source, date, specific capability described, estimated maturity (research / announced / shipped).\n\nConclude: How much runway does a new entrant realistically have before an incumbent closes the gap? What would an incumbent's version of this product look like, and what would it be missing?",
+      "expected": "A threat assessment of incumbent AI post-silicon debug roadmap activity with specific evidence, maturity ratings, and a runway estimate for a new entrant.",
+      "preconditions": []
+    },
+    {
+      "id": "export-control-legal-risk",
+      "name": "Assess Export Control and Data Licensing Legal Constraints",
+      "milestone": "Legal Due Diligence",
+      "type": "research",
+      "prompt": "You are researching the export control, IP, and data licensing legal constraints that apply to a startup building an AI-powered CXL/PCIe post-silicon debug tool that ingests device trace data and register dumps from semiconductor customers.\n\nResearch the following:\n1. EAR/ITAR exposure: Are CXL-enabled compute systems or their debug data subject to Export Administration Regulations or ITAR? Search BIS.doc.gov for relevant ECCNs, look for public guidance on semiconductor debug tools, and find any legal commentary on data-handling obligations for AI tools that process semiconductor IP\n2. Data licensing precedents: Have any companies successfully negotiated 'anonymized failure data in exchange for free tool access' agreements with semiconductor companies? Search for: JEDEC data sharing programs, OCP hardware reliability data initiatives, any published data consortium agreements in the semiconductor space\n3. Liability in EDA tools: How do Synopsys, Cadence, and Mentor/Siemens handle liability limitation in their standard tool licenses when tool errors contribute to silicon failures? Search for any public litigation, legal commentary, or industry standard contract terms\n4. SOC 2 Type II timeline and cost for a 5-person startup: What does the process actually involve, what does it cost, and how long does it take? Find startup experiences, consultant estimates, and any semiconductor-specific requirements\n5. IP ownership in AI tools: When a customer's trace data is used to fine-tune a model, who owns the resulting model weights? Is there a published standard practice from AI tool vendors in regulated industries?\n\nFor each area: what is the specific risk, what does current practice suggest, and what is the minimum legal infrastructure a startup needs before signing its first semiconductor customer contract?\n\nConclude: Which legal risk is most likely to kill or delay the first commercial deal, and what is the minimum viable legal preparation before the first PoC?",
+      "expected": "A legal risk assessment covering export control, data licensing, liability, and SOC 2, with a prioritized list of legal preparations needed before the first commercial engagement.",
+      "preconditions": []
+    },
+    {
+      "id": "strategic-acquirer-exit-model",
+      "name": "Model Strategic Acquirer Landscape and Realistic Exit Scenarios",
+      "milestone": "Investor Readiness",
+      "type": "research",
+      "prompt": "You are modeling the realistic exit scenarios for a startup building AI-powered PCIe/CXL bring-up automation tooling, targeting a pivot from the Fourier PRD's original positioning.\n\nResearch:\n1. Recent acquisitions (2018–2025) by Synopsys, Cadence, Siemens EDA, Keysight Technologies, Teledyne LeCroy, Broadcom, Marvell, and AMD in EDA, post-silicon validation, or protocol analysis — find deal sizes relative to revenue at time of acquisition where disclosed\n2. What specific capabilities would each acquirer likely value in a CXL/PCIe debug automation startup? (customer relationships, data assets, IP, team, product)\n3. At what revenue threshold do semiconductor tooling acquisitions typically occur? Find any public data, analyst commentary, or founder interviews on EDA startup exit valuations\n4. Are there PE roll-up strategies active in EDA tooling? (e.g., similar to how Roper Technologies or Francisco Partners acquires test & measurement companies)\n5. What is the realistic path for a startup that reaches $3–5M ARR with 5 Tier-2 fabless customers and a proprietary failure database — what acquirers would be interested and at what multiple?\n6. IPO viability: Has any standalone EDA or post-silicon validation tool company gone public in the last 10 years? What were the revenue and growth profiles?\n\nConclude: What is the most likely exit scenario (acquirer identity, approximate valuation, required milestones to get there), and how does this shape the fundraising strategy (how much to raise, at what valuation, from which investors)?",
+      "expected": "A strategic exit model with 2–3 likely acquirer scenarios, deal size estimates, required milestone profiles, and implications for fundraising strategy.",
+      "preconditions": ["tier2-fabless-willingness-to-pay"]
+    }
+  ]
+}
+```
+
+## Validation Result
+
+Output length: 29137 chars
+
+## My Notes
+<!-- Write below this line. The harness reads this on re-run. Use #redo to re-run this task, #skip to skip it, #pivot:<new direction> to change the approach. -->
