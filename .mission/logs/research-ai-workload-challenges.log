@@ -1,0 +1,30 @@
+The report has been saved to `/Users/nayak/Documents/Grid/datacenter-ai-challenges-report.md`. Here's a summary of the key findings:
+
+## Key Findings
+
+**GPU/Accelerator Orchestration**
+- Kubernetes fails to partition GPUs effectively — a cluster of 80GB H100s running small inference jobs can achieve ~5% actual utilization
+- Meta's Llama 3 training on 16,384 H100s saw a hardware failure every 3 hours; H100 memory has 3.2x lower MTBE than A100s
+- Only 23% of enterprises successfully orchestrate multi-cloud GPU workloads
+
+**Resource Scheduling**
+- Real-world GPU utilization: 10–40%; only 7% of orgs exceed 85% at peak
+- 60–70% of GPU budget is typically wasted on idle resources
+- Up to 65% of training time consumed by data preprocessing, leaving GPUs idle
+
+**Thermal Management**
+- NVIDIA Blackwell Ultra TDP: 1,400W per chip (up from ~300W seven years ago)
+- Rack densities: 5–10 kW (traditional) → 120–163 kW (Blackwell generation)
+- Air cooling fails above ~30 kW/rack; liquid cooling adds $500K–$2M per MW in capex
+
+**Power Consumption**
+- Global data center electricity: 415 TWh (2024) → projected 945–980 TWh by 2030 (15%/year growth)
+- AI-specific servers growing at 30%/year, projected to quintuple by 2030
+- Industry spent $580B on AI data center infrastructure in 2025 alone
+
+**Infrastructure Scaling**
+- US grid capacity shortfall: 11 GW now, exceeding 40 GW by 2028
+- Grid connection wait times: 4–7 years in major US markets
+- Construction cost: $7.7M/MW (2020) → $10.7M/MW (2025); AI fit-out can reach $25M/MW
+
+The full report includes 52 cited sources with URLs.

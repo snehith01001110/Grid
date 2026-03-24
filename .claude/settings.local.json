@@ -1,0 +1,21 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(chmod +x /Users/nayak/Documents/Grid/mission.sh)",
+      "Bash(bash -n /Users/nayak/Documents/Grid/mission.sh)",
+      "Bash(find /Users/nayak/Documents/Grid/knowledge /Users/nayak/Documents/Grid/.mission -not -path */.*)",
+      "Bash(sort echo:*)",
+      "Bash(bash --version)",
+      "Bash(jq --version)",
+      "Read(//opt/homebrew/bin/**)",
+      "Bash(/opt/homebrew/bin/bash --version)",
+      "Bash(bash mission.sh)",
+      "Bash(bash mission.sh models)",
+      "Bash(bash mission.sh status)",
+      "Bash(bash mission.sh hac-mvp)",
+      "Bash(bash mission.sh status hac-mvp)",
+      "Bash(bash /Users/nayak/Documents/Grid/mission.sh)",
+      "Bash(bash /Users/nayak/Documents/Grid/mission.sh models 2>&1)"
+    ]
+  }
+}

@@ -1,0 +1,27 @@
+{
+  "research-gpu-rma-rejection-rates": {
+    "manufacturer-rma-policies": "running"
+  },
+  "fourier-ai-debug-platform-stress-test": {
+    "riskiest-assumptions": "failed",
+    "cxl-vendor-pain-points": "failed",
+    "competitive-landscape": "failed",
+    "procurement-cycles": "running"
+  },
+  "datacenter-software-issues-research": {
+    "research-ai-workload-demands": "failed",
+    "research-networking-software": "failed",
+    "research-storage-software": "failed",
+    "research-power-thermal-software": "failed",
+    "research-observability-reliability": "failed",
+    "research-security-compliance": "failed",
+    "research-ai-workload-challenges": "failed"
+  },
+  "fourier-ai-debug-platform-stress-test-rebuild": {
+    "riskiest-assumptions": "failed",
+    "cxl-pain-points": "failed",
+    "competitive-landscape": "failed",
+    "procurement-research": "failed",
+    "services-to-product-gtm": "failed"
+  }
+}
