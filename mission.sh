@@ -15,6 +15,31 @@ DECISION_LOG="$KNOWLEDGE_DIR/decision-log.md"
 EXAMPLES_DIR="$GRID_DIR/examples"
 ROUTING_LOG="$MISSION_DIR/routing-log.jsonl"
 
+# ─── Verification helpers ─────────────────────────────────────────────────────
+VERIFICATION_CONF="$MISSION_DIR/verification.conf"
+
+verification_enabled() {
+    # Returns 0 (true) if verification is enabled, 1 (false) otherwise
+    [[ -f "$VERIFICATION_CONF" ]] || return 1
+    local val
+    val="$(grep '^enabled=' "$VERIFICATION_CONF" | head -1 | cut -d= -f2 | tr -d '[:space:]')"
+    [[ "$val" == "true" || "$val" == "1" || "$val" == "yes" ]]
+}
+
+verification_model() {
+    # Returns the verification model name (empty string = use default)
+    [[ -f "$VERIFICATION_CONF" ]] || return 0
+    grep '^model=' "$VERIFICATION_CONF" | head -1 | cut -d= -f2 | tr -d '[:space:]'
+}
+
+verification_fail_action() {
+    # Returns: warn | block | retry
+    [[ -f "$VERIFICATION_CONF" ]] || { echo "warn"; return 0; }
+    local val
+    val="$(grep '^fail_action=' "$VERIFICATION_CONF" | head -1 | cut -d= -f2 | tr -d '[:space:]')"
+    echo "${val:-warn}"
+}
+
 # ─── Routing ─────────────────────────────────────────────────────────────────
 ROUTE_OVERRIDE=""  # set via --route-override flag
 
@@ -672,6 +697,64 @@ Additional context from the researcher: $clean_notes"
             return 0
         fi
         val_result="Output length: ${#output} chars"
+    fi
+
+    # ── DeepVerifier verification (opt-in via .mission/verification.conf) ──
+    local verify_result="" verify_status=0 verify_feedback=""
+    if [[ -f "$GRID_DIR/verify.py" ]] && verification_enabled; then
+        printf "  ${DIM}Verifying output...${RESET}\n"
+        local verify_model_flag=""
+        local v_model
+        v_model="$(verification_model)"
+        [[ -n "$v_model" ]] && verify_model_flag="--model $v_model"
+
+        verify_result="$(printf '%s' "$output" | python3 "$GRID_DIR/verify.py" \
+            --task-id "$task_id" --mission "$mission" $verify_model_flag 2>&1)" || verify_status=$?
+
+        # Parse verification JSON from stdout (last line)
+        local verify_json
+        verify_json="$(echo "$verify_result" | tail -1)"
+        verify_feedback="$(echo "$verify_json" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('feedback','') or '')" 2>/dev/null)" || verify_feedback=""
+
+        local verify_action
+        verify_action="$(verification_fail_action)"
+
+        if [[ $verify_status -eq 1 ]]; then
+            # Verification failed — critical claims refuted
+            printf "  ${RED}✗ Verification failed${RESET}\n"
+            # Print stderr lines (human-readable summary)
+            echo "$verify_result" | head -n -1 | while IFS= read -r vline; do
+                [[ -n "$vline" ]] && printf "  ${DIM}%s${RESET}\n" "$vline"
+            done
+
+            if [[ "$verify_action" == "block" ]]; then
+                set_state "$mission" "$task_id" "failed"
+                write_task_note "$mission" "$task_id" "$task_name" "$milestone" "$task_type" "failed" "$expected" "$prompt_text" "$output" "Verification failed: $verify_feedback" "$task_model_name" "$router_decision" "$router_reasoning"
+                log_decision "$mission" "$task_id" "Verification failed (blocked)"
+                return 0
+            elif [[ "$verify_action" == "retry" && -n "$verify_feedback" ]]; then
+                printf "  ${YELLOW}↻ Retrying with verification feedback...${RESET}\n"
+                full_prompt="$full_prompt
+
+IMPORTANT CORRECTION from verification:
+$verify_feedback
+
+Please revise your output to address these issues."
+                run_prompt "$full_prompt" "$log_file" "$task_model_cmd" "$task_model_name" || true
+                [[ -f "$log_file" ]] && output="$(cat "$log_file")"
+                val_result="$val_result | Verification retry applied"
+            else
+                # warn — continue but note it
+                val_result="$val_result | Verification: FAILED (warned)"
+                log_decision "$mission" "$task_id" "Verification failed (warned): $verify_feedback"
+            fi
+        elif [[ $verify_status -eq 2 ]]; then
+            printf "  ${YELLOW}⚠ Verification: needs revision${RESET}\n"
+            val_result="$val_result | Verification: needs_revision"
+        elif [[ $verify_status -eq 0 ]]; then
+            printf "  ${GREEN}✓ Verification passed${RESET}\n"
+            val_result="$val_result | Verification: passed"
+        fi
     fi
 
     # Success
