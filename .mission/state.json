@@ -34,6 +34,7 @@
     "gap-analysis": "completed"
   },
   "research-nucleus-stress-test": {
-    "market-need-competitor-audit": "running"
+    "market-need-competitor-audit": "failed",
+    "social-comparison-retention-evidence": "running"
   }
 }

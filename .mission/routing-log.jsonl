@@ -68,3 +68,13 @@
   "task_type": "gap-analysis",
   "outcome": "completed"
 }
+{
+  "timestamp": "2026-03-24T06:26:44Z",
+  "task_id": "market-need-competitor-audit",
+  "mission": "research-nucleus-stress-test",
+  "prompt_preview": "You are auditing every existing product, platform, or feature that captures structured public opinio",
+  "routed_to": "claude",
+  "reasoning": "Router returned invalid backend 'claude|local', defaulting to claude",
+  "task_type": "research",
+  "outcome": "failed"
+}
