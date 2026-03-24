@@ -1,145 +1,230 @@
-# Grid — Mission Control for Claude Code + Obsidian
+# Grid — AI-Powered Research & Execution Harness
 
-Grid is a research and execution harness that orchestrates Claude Code in headless mode, logs everything to an Obsidian vault, and supports a full bidirectional feedback loop.
+Grid is a task orchestration system that breaks down complex projects into manageable tasks, runs them through Claude or local AI models, validates results, and stores everything in an Obsidian vault for iterative refinement.
 
-Write missions as JSON or natural language. Grid breaks them into tasks, runs them through Claude (or other models), validates results, and writes structured Obsidian notes you can annotate. On re-run, your annotations feed back into the prompts.
+**Core idea:** Write a mission once (plan, research goal, code task), Grid executes it through your choice of AI backend (Claude for reasoning + web search, local MLX models for offline compute), saves structured notes, and lets you steer future runs by annotating findings.
 
-## Prerequisites
+## Features
 
-```bash
-brew install jq bash    # Bash 4+ required (macOS ships 3.2)
-# Install Claude Code: https://docs.anthropic.com/en/docs/claude-code
-# Install Obsidian: https://obsidian.md (optional, for the knowledge vault)
-```
+- **Intelligent Routing** — `auto` mode routes simple tasks to fast local MLX models (Qwen3-1.7B), complex reasoning to Claude
+- **Terminal UI** — Beautiful live dashboard showing task progress, output, and mission history
+- **Bidirectional Feedback Loop** — Annotate findings in Obsidian, re-run missions to incorporate your insights
+- **Resumable Missions** — Interrupted? Re-run. Failed tasks retry. Completed tasks skip.
+- **Web-Aware Research** — Built-in web search + synthesis for competitive intelligence, market analysis, trend research
+- **Flexible Backends** — Claude (web search, strong reasoning), Local MLX (offline, fast), or any API
 
 ## Quick Start
 
+### 1. Installation
+
 ```bash
+# Prerequisites
+brew install bash jq                    # Bash 4+, JSON processor
+
+# Clone Grid (you already did this)
 cd ~/Documents/Grid
+source .venv/bin/activate              # Or set up a venv
 
-# Run the example mission
-./mission.sh examples/hac-mvp.json
+# Start the TUI
+clu
+```
 
-# Generate a mission from natural language
-./mission.sh plan 'Build a REST API for managing bookmarks with tags and search'
+### 2. First Mission
 
-# Start a research mission
-./mission.sh research 'What are the best approaches to real-time anomaly detection in GPU clusters?'
+In the TUI, just type:
 
-# Check status
-./mission.sh status
+```
+/plan Build a Python CLI tool that converts Markdown to HTML with syntax highlighting
+```
 
-# Review completed mission
-./mission.sh review hac-mvp
+Grid will:
+- Ask Claude to generate 5-8 concrete tasks
+- Show you the plan for review
+- Ask Y/N to execute
+- Run tasks live in the dashboard
+- Save notes to `knowledge/missions/<name>/`
+
+### 3. Quick Research
+
+```
+/research What are the best open-source alternatives to Docker for containerization?
+```
+
+Grid generates a research mission with 3-5 research tasks, synthesis, and gap analysis. Everything is cited.
+
+### 4. Simple Questions
+
+```
+what is the difference between polymorphism and inheritance?
+```
+
+Runs as a quick ask (saved to `knowledge/asks/`), uses auto-routing.
+
+## Terminal UI (TUI)
+
+The TUI is your control center:
+
+```
+┌────────────────────────────────────────────────────────────────────────┐
+│ ◆ Grid Mission Control    TIME 2m47s   Tasks 3/8   Model auto        │
+├────────────────────────────────────────────────────────────────────────┤
+│ Active Task                          │ Tasks                          │
+│                                      │ ✓ Task 1: Setup               │
+│ ▸ Research CXL Vendors               │ ◆ Task 2: Running...          │
+│ Searching for post-silicon debug... │ ○ Task 3: Pending             │
+│ Found 12 sources from 2025-2026      │ ✗ Task 4: Failed              │
+│                                      │                               │
+│ ─────────────────────────────────────┼────────────────────────────── │
+│ [Output log scrolls here]             │ history                      │
+│                                       │ 23:15:22 grid: Planning...   │
+│                                       │ 23:15:44 task-1: started ▶   │
+│                                       │ 23:16:02 task-1: done ✓      │
+└────────────────────────────────────────────────────────────────────────┘
+Type prompt and press Ctrl+J to send · m model · s status · r retry · q quit
+```
+
+**Keyboard shortcuts:**
+- `m` — Switch model (auto / local / claude)
+- `s` — Show mission status
+- `r` — Mark failed tasks for retry
+- `q` — Quit
+
+## Models
+
+Grid comes with three model backends:
+
+| Model | Speed | Cost | Best For |
+|-------|-------|------|----------|
+| **auto** (default) | Fast | Free | Automatically routes tasks: simple ones to local MLX, complex to Claude |
+| **local** | Very Fast | Free | Offline, always-on. Qwen3-14B via MLX (GPU accelerated on M-series Mac) |
+| **claude** | Moderate | API $ | Web search, reasoning-heavy tasks, business analysis |
+
+Switch models in the TUI by pressing `m`, or specify via CLI:
+
+```bash
+./mission.sh --model local plan "your task"
+./mission.sh --model claude research "market opportunity"
+MODEL=auto clu                    # Via environment variable
 ```
 
 ## Directory Structure
 
 ```
 ~/Documents/Grid/
-├── mission.sh                        # Main orchestrator (executable)
+├── mission-tui.py               # Terminal UI (run this for dashboard)
+├── mission.sh                   # Mission executor
+├── mlx-run.py                   # Local MLX model wrapper
 ├── .mission/
-│   ├── state.json                    # Task statuses (created on first run)
-│   ├── models.conf                   # Model backend definitions
-│   └── logs/                         # Raw output per task
-├── knowledge/                        # Obsidian vault root
-│   ├── execplans/                    # Write missions here (JSON or markdown)
-│   ├── missions/                     # Results auto-populate here
+│   ├── models.conf              # Backend definitions (claude, local, router)
+│   ├── state.json               # Task statuses (auto-created)
+│   └── logs/                    # Raw task output
+├── knowledge/                   # Obsidian vault (point vault here)
+│   ├── missions/                # Results auto-populate here
 │   │   └── <mission-name>/
-│   │       ├── _index.md             # Dashboard with status table
-│   │       ├── _feedback.md          # Global steering notes
-│   │       ├── <task-id>.md          # Per-task note with findings
-│   │       ├── synthesis.md          # Cross-task synthesis
-│   │       ├── gap-analysis.md       # What's still unknown
-│   │       └── review.md             # Output of review command
-│   ├── decision-log.md              # Shared append-only log
-│   └── templates/
-│       └── execplan-template.md      # Obsidian template for new plans
+│   │       ├── _index.md        # Dashboard with status table
+│   │       ├── _feedback.md     # Global steering notes (read on re-run)
+│   │       ├── <task-id>.md     # Per-task findings + "My Notes" section
+│   │       └── synthesis.md     # Cross-task synthesis
+│   ├── asks/                    # Quick ask outputs
+│   ├── execplans/               # Mission JSON files you write
+│   └── decision-log.md          # Append-only log of all decisions
 ├── examples/
-│   └── hac-mvp.json                  # Example code mission
-├── DECISIONS.md                      # Architectural decisions
+│   └── hac-mvp.json             # Example: 6-task hardware anomaly collection platform
 └── README.md
 ```
 
-## Commands
+## The Feedback Loop (Core Feature)
 
-### Run a Mission
+Grid's killer feature is the **bidirectional feedback loop**. Here's how it works:
 
-```bash
-./mission.sh <file>
-```
-
-Resolution order: exact path > `knowledge/execplans/<arg>` > `knowledge/execplans/<arg>.json` > `examples/<arg>` > `examples/<arg>.json`
+### Run 1: Initial Mission
 
 ```bash
-./mission.sh hac-mvp                  # Finds examples/hac-mvp.json
-./mission.sh my-plan.json             # Exact path
+clu
+# Type: /plan Analyze our business plan for risks and feasibility
+# Grid generates tasks → runs them → saves notes to knowledge/missions/
 ```
 
-### Plan (Natural Language to Mission)
+Each task gets a note with YAML metadata, findings, and a blank "My Notes" section.
+
+### Edit in Obsidian
+
+Open `knowledge/missions/<name>/<task-id>.md`:
+
+```markdown
+---
+date: 2026-03-23
+model: claude
+status: completed
+---
+
+## Task: Competitive Landscape Analysis
+
+## Findings
+Found 12 companies with AI-assisted debug tooling:
+- Company A: Announced Q4 2025
+- Company B: Shipping now, $50K/seat
+- ...
+
+## My Notes
+Actually, Company C launched in stealth mode last month. Check CrunchBase. Also the pricing model is per-node, not per-seat, which changes our TAM calculation significantly.
+
+#pivot: include per-node vs per-seat pricing models in future research
+```
+
+### Run 2: Re-run with Your Feedback
 
 ```bash
-./mission.sh plan 'Build a CLI tool that converts markdown to HTML with syntax highlighting'
-echo 'detailed description...' | ./mission.sh plan
-./mission.sh plan path/to/brief.md
+clu
+# Type: missions/my-business-analysis (auto-completes)
 ```
 
-Generates 5-15 concrete tasks with IDs, preconditions, prompts, and validation commands. Saves to `knowledge/execplans/` and asks for confirmation before executing.
+Grid will:
+1. **Skip completed tasks** (save time)
+2. **Re-run flagged tasks**: tasks with `#redo` or `#pivot:new direction`
+3. **Feed your notes back in**: "Your notes from the researcher say..." prepended to the task prompt
+4. **Use global feedback**: Anything in `_feedback.md` is prepended to EVERY task
 
-### Research
+So Claude sees your insights and refines based on them.
 
-```bash
-./mission.sh research 'What are the tradeoffs of CXL memory pooling vs traditional NUMA?'
-```
+## Mission JSON Schema
 
-Auto-generates a research mission with:
-- 3-5 research tasks from different angles (industry reports, technical specs, forums, academic papers)
-- A synthesis task combining all findings
-- A gap-analysis task identifying unknowns
-
-### Review
-
-```bash
-./mission.sh review <mission-name>
-```
-
-Reads all completed task outputs and your "My Notes" annotations. Produces a review with:
-- What to investigate next
-- Untested assumptions
-- Strongest/weakest evidence
-- Auto-generated follow-up mission
-
-### Status
-
-```bash
-./mission.sh status                   # All missions with completion %
-./mission.sh status hac-mvp           # Specific mission task list
-```
-
-### Models
-
-```bash
-./mission.sh models                   # List available models
-./mission.sh --model ollama hac-mvp   # Run with specific model
-MODEL=deepseek ./mission.sh hac-mvp   # Via environment variable
-```
-
-## Writing Missions (JSON Schema)
+If you want to write missions directly:
 
 ```json
 {
-  "name": "Mission Name",
-  "description": "What this mission does",
+  "name": "my-business-analysis",
+  "description": "Stress-test our business plan for risks, market timing, and product-market fit",
   "tasks": [
     {
-      "id": "short-kebab-id",
-      "name": "Human-readable name",
-      "milestone": "Phase name",
-      "type": "code",
-      "prompt": "Fully self-contained prompt with ALL context needed",
-      "expected": "What success looks like",
-      "validation": "shell command that exits 0 on success",
-      "preconditions": ["task-id-that-must-finish-first"]
+      "id": "riskiest-assumptions",
+      "name": "Identify Top 5 Riskiest Assumptions",
+      "milestone": "Feasibility Validation",
+      "type": "research",
+      "prompt": "Identify the 5 riskiest assumptions in our business plan...",
+      "expected": "A ranked list with evidence and mitigation strategies",
+      "validation": "test -s output.md && wc -w output.md | awk '{exit $1 > 500 ? 0 : 1}'",
+      "preconditions": []
+    },
+    {
+      "id": "competitive-landscape",
+      "name": "Research Competitive Landscape",
+      "milestone": "Market Need Validation",
+      "type": "research",
+      "prompt": "Research who has shipped AI-assisted post-silicon debug tooling...",
+      "expected": "5+ named companies with product status, pricing, target customers",
+      "validation": "grep -q 'company\\|product' output.md",
+      "preconditions": []
+    },
+    {
+      "id": "synthesis",
+      "name": "Synthesize All Findings",
+      "milestone": "Plan Reconstruction",
+      "type": "synthesis",
+      "prompt": "Read all completed tasks and identify the single highest-leverage change...",
+      "expected": "One-page executive briefing with decision: what to do this week",
+      "validation": "wc -l output.md | awk '{exit $1 > 20 ? 0 : 1}'",
+      "preconditions": ["riskiest-assumptions", "competitive-landscape"]
     }
   ]
 }
@@ -147,77 +232,141 @@ MODEL=deepseek ./mission.sh hac-mvp   # Via environment variable
 
 ### Task Types
 
-| Type | Description |
-|------|-------------|
-| `code` | Implementation task. Runs prompt, validates with shell command. |
-| `research` | Appends web search instructions. Default validation checks output length. |
-| `synthesis` | Reads all completed task outputs. Identifies contradictions. Produces unified report. |
-| `gap-analysis` | Reads synthesis. Identifies unknowns. Generates follow-up mission JSON. |
+| Type | Use Case | Validation |
+|------|----------|-----------|
+| `code` | Write code, scripts, configs | Custom shell command |
+| `research` | Find info, analyze sources | Output length check |
+| `synthesis` | Combine task outputs | Reads all tasks, custom validation |
+| `gap-analysis` | Identify unknowns | Reads synthesis, generates follow-up mission |
 
-### Tips for Good Task Prompts
-
-- **Self-contained**: Each prompt must include ALL file paths, specifications, and context. Don't reference other tasks.
-- **Specific validation**: `test -f file.py && pytest tests/test_file.py -v` is better than `test -d src/`.
-- **Chain preconditions**: If task B needs task A's output, list A in B's preconditions array.
-- **Use milestones**: Group related tasks under milestone names for the dashboard.
-
-## The Obsidian Feedback Loop
-
-This is the core differentiator. Grid doesn't just run tasks — it creates a bidirectional feedback loop:
-
-### Writing Phase (Grid -> Obsidian)
-
-After each task, Grid writes a structured note with YAML frontmatter, findings, and a "My Notes" section at the bottom.
-
-### Reading Phase (Obsidian -> Grid)
-
-On re-run, Grid reads your annotations:
-
-1. **My Notes content**: Anything you write in the "My Notes" section is appended to the task prompt as researcher context.
-
-2. **Global feedback**: Content in `_feedback.md` is prepended to EVERY task prompt in the mission.
-
-3. **Inline directives**:
-   - `#redo` — Re-run this task (resets state to pending)
-   - `#skip` — Skip this task
-   - `#pivot:<new direction>` — Replace the task prompt with new text
-
-### Workflow
-
-1. Run a mission: `./mission.sh my-plan`
-2. Open `knowledge/` in Obsidian
-3. Read findings in each task note
-4. Write observations in "My Notes" sections
-5. Add global steering in `_feedback.md`
-6. Re-run: `./mission.sh my-plan` (completed tasks skip, your notes feed in)
-7. Review: `./mission.sh review my-plan`
-
-## Model Switching
-
-Edit `.mission/models.conf` to add or modify backends:
-
-```
-claude=claude -p --output-format text
-ollama=ollama run qwen3:14b
-deepseek=ollama run deepseek-coder-v2
-local-api=curl -s http://localhost:8080/v1/chat/completions -d
-```
-
-Resolution order: `--model` flag > `MODEL` env var > `claude` default.
-
-## Resuming Failed Missions
-
-Missions are resumable by design:
-
-- Completed tasks are skipped on re-run
-- Failed tasks are re-attempted
-- State is saved to `.mission/state.json` on every task completion
-- Ctrl+C saves state before exiting
-
-To force a re-run of a specific task, add `#redo` to its "My Notes" section in Obsidian.
-
-To reset an entire mission:
+## Commands Reference
 
 ```bash
-jq 'del(.["mission-name"])' .mission/state.json > tmp && mv tmp .mission/state.json
+clu                                    # Launch the TUI
+clu "what is X?"                       # Quick ask (no TUI)
+clu plan "Build a feature"             # Generate and run a mission
+clu research "Market opportunity"      # Auto-generate research mission
+clu status                             # Show all missions
+clu status my-mission                  # Show tasks for specific mission
 ```
+
+Inside the TUI:
+```
+just type                              # Quick ask
+/plan describe what to build           # Generate mission
+/research what you want to know        # Generate research mission
+```
+
+## Workflow Example
+
+**Scenario:** You're validating a new business idea and need to stress-test your assumptions.
+
+```bash
+clu
+# Type: /plan "Fourier is an AI-powered post-silicon debug platform for CXL device vendors. Is this viable? What are the biggest risks?"
+# Grid: "I'll generate 8 tasks for you. Review? [y/N]"
+# You: y
+
+# Tasks run live in dashboard. You see output streaming.
+# Grid saves to knowledge/missions/fourier-ai-debug-validation/
+
+# Later, open Obsidian and read the tasks:
+# - Task 1: Identified market size, pricing, customer acquisition as biggest unknowns
+# - Task 2: Found 3 competing startups and 2 incumbent moves into this space
+# - Task 3: Found customer pain points via forums and CXL summit talks
+
+# In "My Notes" sections, you add:
+# - "Task 1: Actually, the market is smaller than Claude estimated. CXL adoption is slower in 2026."
+# - "Task 2: Competitor X just raised $50M. Add this to the threat landscape."
+
+# Back in TUI:
+clu missions/fourier-ai-debug-validation
+
+# Grid re-runs the tasks, but this time:
+# - Completed tasks skip
+# - Your notes are fed back in: "The researcher noted that CXL adoption is slower..."
+# - Output reflects your corrections
+
+clu status missions/fourier-ai-debug-validation
+# Shows: 8/8 tasks completed with your feedback integrated
+```
+
+## Obsidian Setup
+
+Point your Obsidian vault to `~/Documents/Grid/knowledge/`:
+
+1. Open Obsidian → Vault Switcher (bottom left)
+2. "Open folder as vault"
+3. Navigate to `~/Documents/Grid/knowledge`
+4. Enable graph view to see task relationships
+
+Now Grid's output appears live in your vault.
+
+## Advanced: Custom Models
+
+Edit `.mission/models.conf` to add new backends:
+
+```bash
+# Use any API-compatible endpoint
+my-local-api=curl -s http://localhost:8000/v1/chat/completions \
+  -H "Content-Type: application/json" \
+  -d '{"model":"gpt-4","messages":[{"role":"user","content":"'"$prompt"'"}]}'
+```
+
+Then:
+
+```bash
+./mission.sh --model my-local-api plan "your task"
+```
+
+## Troubleshooting
+
+**"Unknown model" error:**
+```bash
+./mission.sh models    # List available models
+```
+
+**TUI not starting:**
+```bash
+source ~/.zshrc        # Reload shell
+clu                    # Try again
+```
+
+**Tasks failing validation:**
+1. Check `.mission/logs/<task-id>.log` for raw output
+2. Add `#redo` to task's "My Notes" in Obsidian
+3. Re-run mission
+
+**Rate-limited by Claude:**
+```bash
+./mission.sh --model local plan "your task"   # Use local model instead
+```
+
+## Architecture
+
+Grid is:
+- **Mission orchestrator** (mission.sh) — Validates tasks, manages state, calls model backends
+- **Terminal UI** (mission-tui.py) — Live dashboard, task runner, model switcher
+- **Local model wrapper** (mlx-run.py) — Qwen3 via MLX for GPU-accelerated inference
+- **Knowledge vault** (knowledge/) — Obsidian integration point for the feedback loop
+
+The feedback loop is implemented via:
+1. **Writer**: Tasks write to `.md` files with YAML frontmatter and "My Notes" section
+2. **Reader**: On re-run, Grid parses `My Notes` and `_feedback.md`, appends to task prompts
+3. **Router**: Auto mode intelligently picks local vs Claude based on task complexity
+
+## License
+
+MIT. Fork and extend for your use case.
+
+## Next Steps
+
+1. `clu` to launch the TUI
+2. Type `/plan something you want to accomplish`
+3. Review the generated mission
+4. Watch it execute live
+5. Open `knowledge/missions/` in Obsidian to see results
+6. Annotate findings with your own insights
+7. Re-run to incorporate feedback
+
+Happy researching and building!
