@@ -1,0 +1,23 @@
+Traceback (most recent call last):
+  File "/Users/nayak/Documents/Grid/mlx-run.py", line 81, in <module>
+    main()
+    ~~~~^^
+  File "/Users/nayak/Documents/Grid/mlx-run.py", line 64, in main
+    response = generate(
+        model, tokenizer,
+    ...<2 lines>...
+        verbose=False,
+    )
+  File "/Users/nayak/Documents/Grid/.venv/lib/python3.14/site-packages/mlx_lm/generate.py", line 768, in generate
+    for response in stream_generate(model, tokenizer, prompt, **kwargs):
+                    ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nayak/Documents/Grid/.venv/lib/python3.14/site-packages/mlx_lm/generate.py", line 705, in stream_generate
+    for n, (token, logprobs, from_draft) in enumerate(token_generator):
+                                            ~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "/Users/nayak/Documents/Grid/.venv/lib/python3.14/site-packages/mlx_lm/generate.py", line 695, in <genexpr>
+    (token, logprobs, False) for token, logprobs in token_generator
+                                                    ^^^^^^^^^^^^^^^
+  File "/Users/nayak/Documents/Grid/.venv/lib/python3.14/site-packages/mlx_lm/generate.py", line 456, in generate_step
+    mx.async_eval(next_y, next_logprobs)
+    ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+KeyboardInterrupt

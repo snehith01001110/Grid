@@ -186,20 +186,25 @@ class ModelSelector(ModalScreen):
         t = Text()
         t.append(" SELECT MODEL\n", style=f"bold {ORANGE}")
         t.append("─" * 36 + "\n", style=DIMMER)
+        # Display name mapping (for UI friendliness)
+        display_names = {"local": "local-14b"}
+        desc_map = {"auto": "routes via local model", "claude": "Claude Code",
+                    "local": "Qwen3-14B 4-bit (MLX)", "local-8b": "Qwen3-8B 4-bit (MLX)",
+                    "local-32b": "Qwen3-32B 3-bit (MLX)", "openai": "GPT-4o"}
         for i, name in enumerate(self._models):
             is_current = name == self.current
             is_cursor = i == self._cursor
+            display_name = display_names.get(name, name)
             if is_cursor:
                 t.append(f"  ▸ ", style=f"bold {AMBER}")
-                t.append(f"{name}", style=f"bold {AMBER}")
+                t.append(f"{display_name}", style=f"bold {AMBER}")
             elif is_current:
                 t.append(f"  ● ", style=AMBER)
-                t.append(f"{name}", style=AMBER)
+                t.append(f"{display_name}", style=AMBER)
             else:
                 t.append(f"    ", style=DIM)
-                t.append(f"{name}", style=WHITE)
-            desc = {"auto": "routes via local model", "claude": "Claude Code",
-                    "local": "Qwen3-14B (MLX)", "openai": "GPT-4o"}.get(name, "")
+                t.append(f"{display_name}", style=WHITE)
+            desc = desc_map.get(name, "")
             if desc:
                 t.append(f"  {desc}", style=DIM)
             t.append("\n")
@@ -928,6 +933,7 @@ class GridApp(App):
                 bufsize=0,
                 cwd=str(GRID_DIR),
                 env=env,
+                start_new_session=True,  # own process group so interrupt kills children
             )
 
             # For ask mode: show the question first, then stream the answer cleanly
@@ -1263,7 +1269,12 @@ class GridApp(App):
 
     def action_interrupt(self):
         if self.proc and self.proc.poll() is None:
-            self.proc.terminate()
+            import signal
+            try:
+                # Kill entire process group (bash + all child processes like claude/mlx)
+                os.killpg(os.getpgid(self.proc.pid), signal.SIGTERM)
+            except (ProcessLookupError, PermissionError):
+                self.proc.terminate()
             self.query_one("#events", EventLog).event(
                 "grid", "Interrupted ⚡", RED
             )

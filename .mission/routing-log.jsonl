@@ -78,3 +78,73 @@
   "task_type": "research",
   "outcome": "failed"
 }
+{
+  "timestamp": "2026-03-24T07:02:07Z",
+  "task_id": "competitive-sentiment-landscape",
+  "mission": "research-nucleus-startup-stress-test",
+  "prompt_preview": "Map every existing product, feature, or platform that captures structured public opinion or sentimen",
+  "routed_to": "claude",
+  "reasoning": "research",
+  "task_type": "research",
+  "outcome": "completed"
+}
+{
+  "timestamp": "2026-03-24T07:16:01Z",
+  "task_id": "labeled-failure-corpus-reality",
+  "mission": "research-fourier-data-moat-viability",
+  "prompt_preview": "The Fourier Unified PRD proposes an AI system that diagnoses CXL and PCIe post-silicon link training",
+  "routed_to": "claude",
+  "reasoning": "research",
+  "task_type": "research",
+  "outcome": "completed"
+}
+{
+  "timestamp": "2026-03-24T07:31:36Z",
+  "task_id": "darpa-dod-hardware-reliability-funding",
+  "mission": "research-fourier-data-moat-viability",
+  "prompt_preview": "The synthesis critique recommends that Fourier pursue DARPA or DoD research contracts to fund the fi",
+  "routed_to": "claude",
+  "reasoning": "research requires web search and analysis",
+  "task_type": "research",
+  "outcome": "completed"
+}
+{
+  "timestamp": "2026-03-24T07:45:32Z",
+  "task_id": "workflow-automation-vs-ai-diagnosis-moat",
+  "mission": "research-fourier-data-moat-viability",
+  "prompt_preview": "The synthesis critique recommends pivoting Fourier's positioning from 'AI-powered root cause diagnos",
+  "routed_to": "claude",
+  "reasoning": "research requires web search",
+  "task_type": "research",
+  "outcome": "completed"
+}
+{
+  "timestamp": "2026-03-24T08:01:58Z",
+  "task_id": "pcie-60-validation-market-size",
+  "mission": "research-fourier-data-moat-viability",
+  "prompt_preview": "The synthesis critique argues that the CXL-only market is too small (~15–30 validation teams, $3–9M ",
+  "routed_to": "claude",
+  "reasoning": "research requires web search",
+  "task_type": "research",
+  "outcome": "completed"
+}
+{
+  "timestamp": "2026-03-24T08:20:58Z",
+  "task_id": "semiconductor-gtm-first-customer-profile",
+  "mission": "research-fourier-data-moat-viability",
+  "prompt_preview": "The synthesis critique states that hyperscalers are the wrong first customer (18–36 month procuremen",
+  "routed_to": "claude",
+  "reasoning": "research requires web search",
+  "task_type": "research",
+  "outcome": "completed"
+}
+{
+  "timestamp": "2026-03-24T08:26:21Z",
+  "task_id": "synthesis-true-problem-statement",
+  "mission": "research-fourier-data-moat-viability",
+  "prompt_preview": "You are synthesizing findings from five research tasks to identify the single deepest structural pro",
+  "routed_to": "local",
+  "reasoning": "simple summary task",
+  "task_type": "synthesis",
+  "outcome": "completed"
+}

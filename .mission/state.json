@@ -34,7 +34,22 @@
     "gap-analysis": "completed"
   },
   "research-nucleus-stress-test": {
-    "market-need-competitor-audit": "failed",
+    "market-need-competitor-audit": "running",
     "social-comparison-retention-evidence": "running"
+  },
+  "research-validate-fourier-synthesis": {
+    "validate-chipnemo-claims": "running"
+  },
+  "research-nucleus-startup-stress-test": {
+    "competitive-sentiment-landscape": "completed"
+  },
+  "research-fourier-data-moat-viability": {
+    "labeled-failure-corpus-reality": "completed",
+    "darpa-dod-hardware-reliability-funding": "completed",
+    "workflow-automation-vs-ai-diagnosis-moat": "completed",
+    "pcie-60-validation-market-size": "completed",
+    "semiconductor-gtm-first-customer-profile": "completed",
+    "synthesis-true-problem-statement": "completed",
+    "gap-analysis-what-research-missed": "running"
   }
 }

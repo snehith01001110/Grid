@@ -17,8 +17,9 @@ os.environ.setdefault("HF_HUB_DISABLE_PROGRESS_BARS", "1")
 os.environ.setdefault("TRANSFORMERS_NO_ADVISORY_WARNINGS", "1")
 
 MODELS = {
-    "router": "mlx-community/Qwen3-1.7B-4bit",
-    "local":  "mlx-community/Qwen3-14B-4bit",
+    "router":   "mlx-community/Qwen3-1.7B-4bit",
+    "local":    "mlx-community/Qwen3-14B-4bit",
+    "local-8b": "mlx-community/Qwen3-8B-4bit",
 }
 
 def main():
@@ -44,9 +45,17 @@ def main():
         sys.exit(1)
 
     from mlx_lm import load, generate
+    from mlx_lm.sample_utils import make_logits_processors, make_sampler
 
     model_path = MODELS[model_name]
     model, tokenizer = load(model_path)
+
+    # Repetition penalty to prevent degenerate looping
+    logits_processors = make_logits_processors(
+        repetition_penalty=1.2,
+        repetition_context_size=100,
+    )
+    sampler = make_sampler(temp=0.7, top_p=0.9)
 
     if model_name == "router":
         max_tokens = 150
@@ -66,6 +75,8 @@ def main():
         prompt=chat_prompt,
         max_tokens=max_tokens,
         verbose=False,
+        sampler=sampler,
+        logits_processors=logits_processors,
     )
 
     # Strip any thinking tags from output

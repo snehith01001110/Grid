@@ -175,6 +175,66 @@ resolve_model() {
     ACTIVE_MODEL_NAME="$model_name"
 }
 
+# ─── File context for non-Claude models ──────────────────────────────────────
+CONTEXT_DIRS_CONF="$MISSION_DIR/context-dirs.conf"
+
+build_file_context() {
+    local prompt="$1"
+    # Only inject for non-Claude models (Claude has its own file tools)
+    local model_name="${2:-}"
+    if [[ "$model_name" == "claude" ]]; then
+        echo "$prompt"
+        return 0
+    fi
+
+    # Read context directories from config (one dir per line)
+    local context_dirs=()
+    if [[ -f "$CONTEXT_DIRS_CONF" ]]; then
+        while IFS= read -r dir; do
+            [[ -z "$dir" || "$dir" == \#* ]] && continue
+            dir="$(eval echo "$dir")"  # expand ~ and $HOME
+            [[ -d "$dir" ]] && context_dirs+=("$dir")
+        done < "$CONTEXT_DIRS_CONF"
+    fi
+
+    # Default: include Grid knowledge dir
+    if [[ ${#context_dirs[@]} -eq 0 ]]; then
+        context_dirs=("$KNOWLEDGE_DIR")
+    fi
+
+    # Build file listing (shallow — just names and sizes, not contents)
+    local file_context=""
+    for dir in "${context_dirs[@]}"; do
+        local listing
+        listing="$(find "$dir" -maxdepth 2 -type f \( -name '*.md' -o -name '*.txt' -o -name '*.json' -o -name '*.py' -o -name '*.sh' \) -exec ls -lh {} \; 2>/dev/null | awk '{print $NF, $5}' | head -50)" || true
+        if [[ -n "$listing" ]]; then
+            file_context="${file_context}
+[Files in ${dir}]:
+${listing}
+"
+        fi
+    done
+
+    # Also list top-level Documents directory
+    local docs_dir="$HOME/Documents"
+    if [[ -d "$docs_dir" ]]; then
+        local docs_listing
+        docs_listing="$(ls -1 "$docs_dir" 2>/dev/null | head -30)" || true
+        if [[ -n "$docs_listing" ]]; then
+            file_context="${file_context}
+[Folders in ~/Documents]:
+${docs_listing}
+"
+        fi
+    fi
+
+    if [[ -n "$file_context" ]]; then
+        printf 'You ARE able to see the user'\''s local files. The following is a real listing of their filesystem. Use this information to answer their question accurately. Do NOT say you cannot access files — you can see them below.\n\n%s\n\n---\nUser question: %s' "$file_context" "$prompt"
+    else
+        echo "$prompt"
+    fi
+}
+
 # ─── Runner ──────────────────────────────────────────────────────────────────
 run_prompt() {
     local prompt="$1"
@@ -197,21 +257,40 @@ run_prompt() {
         fi
     fi
 
+    # Inject file context for non-Claude models
+    if [[ "$model_name" != "claude" ]]; then
+        prompt="$(build_file_context "$prompt" "$model_name")"
+    fi
+
     # Execute with fallback: if model fails and isn't local, try local as fallback
     local run_status=0
     if [[ "$model_name" == "local-api" || "$model_name" == "ldr" ]]; then
         local json_payload
         json_payload=$(jq -n --arg p "$prompt" '{"model":"default","messages":[{"role":"user","content":$p}]}')
         eval "$model_cmd" "'$json_payload'" > "$log_file" 2>&1 || run_status=$?
-    elif [[ "$model_name" == "local" || "$model_name" == "ollama" || "$model_name" == "deepseek" ]]; then
+    elif [[ "$model_name" == "local" || "$model_name" == "local-8b" || "$model_name" == "ollama" || "$model_name" == "deepseek" ]]; then
         # MLX / ollama — pipe prompt via stdin
         printf '%s' "$prompt" | eval "$model_cmd" > "$log_file" 2>&1 || run_status=$?
     else
         # Other models (claude, openai, etc.) — pipe prompt via stdin
-        printf '%s' "$prompt" | eval "$model_cmd" > "$log_file" 2>&1 || run_status=$?
+        local stderr_file
+        stderr_file="$(mktemp)"
+        printf '%s' "$prompt" | eval "$model_cmd" > "$log_file" 2>"$stderr_file" || run_status=$?
 
-        # If non-local model fails, try local as fallback
-        if [[ $run_status -ne 0 && "$model_name" != "local" ]]; then
+        # If output is empty but exit was 0, retry once (claude can silently produce nothing)
+        if [[ $run_status -eq 0 && ! -s "$log_file" ]]; then
+            printf "  ${DIM}⟳ Empty output, retrying...${RESET}\n" >&2
+            printf '%s' "$prompt" | eval "$model_cmd" > "$log_file" 2>"$stderr_file" || run_status=$?
+        fi
+
+        # If still empty or failed, append stderr to log for diagnosis
+        if [[ ! -s "$log_file" && -s "$stderr_file" ]]; then
+            cat "$stderr_file" >> "$log_file"
+        fi
+        rm -f "$stderr_file"
+
+        # If non-local model failed or produced empty output, try local as fallback
+        if [[ ($run_status -ne 0 || ! -s "$log_file") && "$model_name" != "local" ]]; then
             local local_cmd
             local_cmd="$(get_model_cmd "local" 2>/dev/null)" || true
             if [[ -n "$local_cmd" ]]; then
@@ -235,15 +314,6 @@ log_decision() {
 
 # ─── Routing ─────────────────────────────────────────────────────────────────
 
-ROUTER_SYSTEM_PROMPT='You are a task router. Given a task description, respond with ONLY a JSON object, no other text:
-{"backend":"claude|local","reasoning":"one sentence why"}
-
-Routing rules:
-- claude: complex code generation, multi-file changes, architecture decisions, web search, research, anything requiring strong reasoning or tool use
-- local: simple questions, code formatting, summarization, boilerplate, file manipulation, anything a 14B model can handle
-
-Prefer local when quality difference is negligible. Use claude only when the task genuinely needs it.'
-
 check_backend_available() {
     local backend="$1"
     case "$backend" in
@@ -262,66 +332,86 @@ check_backend_available() {
     esac
 }
 
+ROUTER_SYSTEM_PROMPT='Choose which backend to use. Reply with ONLY valid JSON.
+
+Example for claude: {"backend":"claude","reasoning":"needs web search"}
+Example for local: {"backend":"local","reasoning":"simple summary task"}
+
+Rules:
+- "claude" for: research, web search, complex code, architecture, debugging, multi-file changes
+- "local" for: simple questions, formatting, summarization, boilerplate, short answers
+
+Prefer "local" when possible. Use "claude" only when genuinely needed.'
+
 route_task() {
     local task_type="$1" prompt_text="$2" expected="$3"
 
     local router_cmd
     router_cmd="$(get_model_cmd "router" 2>/dev/null)" || router_cmd=""
 
-    # If router not available, default to claude
-    if [[ -z "$router_cmd" ]]; then
-        printf "  ${YELLOW}⚠ Router unavailable, defaulting to claude${RESET}\n" >&2
-        echo "claude|router unavailable"
-        return 0
-    fi
-
-    local user_msg
-    user_msg="${ROUTER_SYSTEM_PROMPT}
+    if [[ -n "$router_cmd" ]]; then
+        # Try ML router first
+        local user_msg="${ROUTER_SYSTEM_PROMPT}
 
 Task type: ${task_type}
-Prompt (first 500 chars): ${prompt_text:0:500}
-Expected outcome: ${expected:0:200}"
+Prompt: ${prompt_text:0:300}"
 
-    # Call router via MLX (pipe prompt via stdin)
-    local content
-    content="$(printf '%s' "$user_msg" | eval "$router_cmd" 2>/dev/null)" || content=""
+        local content
+        content="$(printf '%s' "$user_msg" | eval "$router_cmd" 2>/dev/null)" || content=""
 
-    # Extract JSON — router may include thinking or extra text
-    local json_block
-    json_block="$(echo "$content" | python3 -c "
+        # Extract backend — look for "claude" or "local" in output
+        local backend=""
+        local reasoning=""
+        if echo "$content" | grep -q '"backend"'; then
+            backend="$(echo "$content" | python3 -c "
 import sys, json, re
 text = sys.stdin.read()
-# Find first valid JSON object (greedy match of balanced braces)
-# Look for '{' then everything up to matching '}'
-matches = re.finditer(r'\{\"backend\":[^}]*\}', text)
-for m in matches:
-    try:
-        json.loads(m.group())
-        print(m.group())
-        sys.exit(0)
-    except:
-        pass
-print('{}')
-" 2>/dev/null)" || json_block="{}"
+# Find any JSON-like object
+m = re.search(r'\{[^}]*\"backend\"\s*:\s*\"(claude|local)\"[^}]*\}', text)
+if m:
+    # Extract just the backend value
+    b = re.search(r'\"backend\"\s*:\s*\"(claude|local)\"', m.group())
+    if b: print(b.group(1))
+" 2>/dev/null)" || backend=""
+            reasoning="$(echo "$content" | python3 -c "
+import sys, re
+text = sys.stdin.read()
+m = re.search(r'\"reasoning\"\s*:\s*\"([^\"]+)\"', text)
+if m: print(m.group(1))
+" 2>/dev/null)" || reasoning=""
+        fi
 
-    local backend reasoning
-    backend="$(echo "$json_block"  | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('backend','').strip())"  2>/dev/null)" || backend=""
-    reasoning="$(echo "$json_block" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('reasoning','').strip())" 2>/dev/null)" || reasoning=""
-
-    # Trim any residual whitespace
-    backend="$(printf '%s' "$backend" | tr -d '[:space:]')"
-
-    # Validate backend value
-    if [[ ! "$backend" =~ ^(claude|local)$ ]]; then
-        local orig_backend="$backend"
-        backend="claude"
-        reasoning="Router returned invalid backend '${orig_backend}', defaulting to claude"
+        # If ML router gave a valid answer, use it
+        if [[ "$backend" == "claude" || "$backend" == "local" ]]; then
+            # Availability check
+            if [[ "$backend" == "local" ]] && ! check_backend_available local; then
+                reasoning="[local unavailable, fell back] $reasoning"
+                backend="claude"
+            fi
+            echo "${backend}|${reasoning}"
+            return 0
+        fi
+        # ML router failed — fall through to rule-based
     fi
 
-    # Availability fallbacks
-    if [[ "$backend" == "local" ]] && ! check_backend_available local; then
-        reasoning="[local unavailable, fell back] $reasoning"
+    # Rule-based fallback
+    local backend="claude"
+    local reasoning="rule-based"
+    local prompt_lower
+    prompt_lower="$(printf '%s' "${prompt_text:0:500}" | tr '[:upper:]' '[:lower:]')"
+
+    # These types always need claude
+    if [[ "$task_type" == "research" || "$task_type" == "gap-analysis" ]]; then
         backend="claude"
+        reasoning="$task_type needs web search/deep analysis"
+    elif [[ "$prompt_lower" == *"search"* || "$prompt_lower" == *"investigate"* || \
+            "$prompt_lower" == *"refactor"* || "$prompt_lower" == *"implement"* || \
+            "$prompt_lower" == *"debug"* || "$prompt_lower" == *"architect"* ]]; then
+        backend="claude"
+        reasoning="complex task keywords detected"
+    elif check_backend_available local; then
+        backend="local"
+        reasoning="simple task, local can handle"
     fi
 
     echo "${backend}|${reasoning}"
@@ -419,8 +509,12 @@ write_mission_index() {
     local index_path="$index_dir/_index.md"
     mkdir -p "$index_dir"
 
+    if [[ ! -f "$mission_file" ]]; then
+        return 0
+    fi
+
     local total completed failed skipped pending
-    total="$(jq '.tasks | length' "$mission_file")"
+    total="$(jq '.tasks | length' "$mission_file" 2>/dev/null)" || total=0
     completed="$(jq -r --arg m "$mission" '.[$m] // {} | to_entries | map(select(.value == "completed")) | length' "$STATE_FILE")"
     failed="$(jq -r --arg m "$mission" '.[$m] // {} | to_entries | map(select(.value == "failed")) | length' "$STATE_FILE")"
     skipped="$(jq -r --arg m "$mission" '.[$m] // {} | to_entries | map(select(.value == "skipped")) | length' "$STATE_FILE")"
@@ -773,7 +867,7 @@ Additional context from the researcher: $clean_notes"
             # Verification failed — critical claims refuted
             printf "  ${RED}✗ Verification failed${RESET}\n"
             # Print stderr lines (human-readable summary)
-            echo "$verify_result" | head -n -1 | while IFS= read -r vline; do
+            echo "$verify_result" | sed '$d' | while IFS= read -r vline; do
                 [[ -n "$vline" ]] && printf "  ${DIM}%s${RESET}\n" "$vline"
             done
 
@@ -838,6 +932,10 @@ Please revise your output to address these issues."
 run_mission() {
     local mission_file="$1"
 
+    if [[ ! -f "$mission_file" ]]; then
+        printf "${RED}✗ Mission file not found: %s${RESET}\n" "$mission_file"
+        exit 1
+    fi
     if ! jq . "$mission_file" > /dev/null 2>&1; then
         printf "${RED}✗ Invalid JSON: %s${RESET}\n" "$mission_file"
         exit 1

@@ -1,0 +1,77 @@
+{
+  "name": "research-fourier-data-moat-viability",
+  "description": "Research mission: Is the training data problem in the Fourier Unified PRD truly fatal, and is there a credible path around it?",
+  "tasks": [
+    {
+      "id": "labeled-failure-corpus-reality",
+      "name": "How much labeled post-silicon failure data actually exists in the wild?",
+      "milestone": "Research",
+      "type": "research",
+      "prompt": "The Fourier Unified PRD proposes an AI system that diagnoses CXL and PCIe post-silicon link training failures by generalizing from labeled examples. The synthesis critique claims that each CXL validation team accumulates only 50–200 labeled root-cause failures per product generation — far below what supervised ML needs to generalize. Research the following: (1) What volume of labeled post-silicon failure data has been used in published ML-for-hardware-debug studies (ChipNeMo, MEIC/ICCAD 2024, Intel's ML on post-silicon validation, VeriDebug)? (2) Are there known techniques — synthetic data generation, simulation-to-silicon transfer, or few-shot fine-tuning — that reduce the data requirement for failure diagnosis? (3) Has any company (startup or incumbent) solved the post-silicon failure diagnosis data scarcity problem, and if so, how? Cite specific numbers where available.",
+      "expected": "A concrete estimate of the labeled data gap (orders of magnitude), a review of known mitigation techniques with their limitations, and at least one real-world precedent for how a company navigated this problem (or failed to).",
+      "preconditions": []
+    },
+    {
+      "id": "darpa-dod-hardware-reliability-funding",
+      "name": "Can government contracts fund the data flywheel?",
+      "milestone": "Research",
+      "type": "research",
+      "prompt": "The synthesis critique recommends that Fourier pursue DARPA or DoD research contracts to fund the first 18 months of data collection infrastructure. Research the following: (1) What active DARPA/DoD programs fund work on silicon reliability, post-silicon validation tooling, or hardware failure analysis (e.g. DARPA ISAT, CHIPS Act programs, DoD trusted foundry programs)? (2) What is the realistic timeline and overhead for winning and executing a DARPA contract for a 2–5 person startup? (3) Are there case studies of EDA or semiconductor tooling startups that used government funding to build proprietary data assets and then converted those to commercial products? What worked and what didn't?",
+      "expected": "A list of 3–5 active or recently-closed programs with fit for this use case, a realistic timeline and cost estimate for a startup pursuing this path, and at least two case study references.",
+      "preconditions": []
+    },
+    {
+      "id": "workflow-automation-vs-ai-diagnosis-moat",
+      "name": "Is 'workflow automation' a defensible product, or does it commoditize immediately?",
+      "milestone": "Research",
+      "type": "research",
+      "prompt": "The synthesis critique recommends pivoting Fourier's positioning from 'AI-powered root cause diagnosis' to 'AI-assisted workflow automation' for PCIe/CXL bring-up (spec RAG, structured checklists, hardware analyzer API integration). Research the following: (1) What is the competitive durability of workflow automation products in semiconductor/EDA tooling — do they get commoditized by larger incumbents (Synopsys, Cadence, Keysight) or do they maintain pricing power? (2) Are there examples of companies that started with honest 'workflow automation' positioning in EDA/silicon validation and grew into defensible products? What made them sticky? (3) Could a hyperscaler (Google, Meta, Microsoft) or an EDA incumbent replicate a spec-RAG + checklist tool in-house within 12 months, and what would prevent them from doing so?",
+      "expected": "A realistic durability assessment for workflow automation as a wedge in this market, with 2–3 named precedents (success or failure), and a clear articulation of what creates switching costs in this product category.",
+      "preconditions": []
+    },
+    {
+      "id": "pcie-60-validation-market-size",
+      "name": "What is the true TAM if Fourier expands from CXL to PCIe 6.0?",
+      "milestone": "Research",
+      "type": "research",
+      "prompt": "The synthesis critique argues that the CXL-only market is too small (~15–30 validation teams, $3–9M ARR ceiling) and recommends expanding to PCIe 6.0 validation as the primary wedge. Research the following: (1) How many active PCIe 6.0 validation programs exist globally in 2025–2026 (fabless semiconductors, system companies, hyperscalers)? What is a realistic count of teams with the budget and urgency to pay for bring-up tooling? (2) What is the current tooling spend per PCIe validation team for hardware analyzers, simulation tools, and software? How much of that budget is 'available' for a new software tool? (3) Is the PCIe validation market moving toward commoditized open-source tooling (e.g. PCIe compliance test suites) or toward higher-value proprietary tools? Cite market reports, analyst estimates, or industry sources.",
+      "expected": "A bottom-up TAM estimate for PCIe 6.0 validation tooling with sourced numbers, a realistic per-seat or per-team pricing range, and an assessment of the open-source commoditization risk.",
+      "preconditions": []
+    },
+    {
+      "id": "semiconductor-gtm-first-customer-profile",
+      "name": "Who is the right first paying customer, and what does closing that deal actually require?",
+      "milestone": "Research",
+      "type": "research",
+      "prompt": "The synthesis critique states that hyperscalers are the wrong first customer (18–36 month procurement cycle, SOC 2 Type II required, build-vs-buy default) and recommends targeting well-funded fabless startups or Tier-2 semiconductor companies. Research the following: (1) Which specific companies are in active CXL or PCIe 6.0 bring-up cycles in 2025–2026 that are (a) not hyperscalers and (b) unlikely to build internal tooling? Consider Astera Labs, XConn, Montage, Rambus, Microchip, plus AI-specific interconnect startups. (2) What does the actual procurement process look like at a 200–2000 person fabless semiconductor company for a $100–200K software tool? Who signs, what procurement steps are required, what is the typical sales cycle? (3) What is a realistic first PoC structure — scope, duration, success criteria, and conversion rate to a paid license — based on comparable EDA startup GTM playbooks?",
+      "expected": "A named short-list of 5–10 realistic first-customer targets with rationale, a realistic procurement timeline and stakeholder map for this customer type, and a structured PoC template with success criteria and typical conversion rates.",
+      "preconditions": []
+    },
+    {
+      "id": "synthesis-true-problem-statement",
+      "name": "Synthesize: What is the single true problem in the Fourier PRD?",
+      "milestone": "Synthesis",
+      "type": "synthesis",
+      "prompt": "You are synthesizing findings from five research tasks to identify the single deepest structural problem in the Fourier Unified PRD — not a list of issues, but the one root cause that, if unsolved, makes everything else moot. Use findings from: labeled-failure-corpus-reality, darpa-dod-hardware-reliability-funding, workflow-automation-vs-ai-diagnosis-moat, pcie-60-validation-market-size, and semiconductor-gtm-first-customer-profile. Answer these questions with evidence: (1) Is the training data gap truly fatal, or is there a credible 18-month path to a usable corpus? (2) Is the workflow automation pivot a real business or a consolation prize? (3) Does the PCIe 6.0 TAM expansion change the fundamental viability calculus? Produce a single-sentence 'root problem statement' and a 3-bullet action plan for the founder — not a list of everything wrong, but the minimum viable pivot that makes the company fundable.",
+      "expected": "A root problem statement in one sentence, a 3-bullet minimum viable pivot, and an explicit answer to whether the business is fundable after the pivot.",
+      "preconditions": [
+        "labeled-failure-corpus-reality",
+        "darpa-dod-hardware-reliability-funding",
+        "workflow-automation-vs-ai-diagnosis-moat",
+        "pcie-60-validation-market-size",
+        "semiconductor-gtm-first-customer-profile"
+      ]
+    },
+    {
+      "id": "gap-analysis-what-research-missed",
+      "name": "Gap Analysis: What does the research still not answer?",
+      "milestone": "Gap Analysis",
+      "type": "gap-analysis",
+      "prompt": "Review the synthesis from synthesis-true-problem-statement and all five research tasks. Identify: (1) What questions remain unanswered that would change the conclusion — e.g., whether a specific named company would anchor a seed round, whether a specific DARPA program is actually open to proposals, whether a specific technical approach to synthetic data generation has been validated. (2) What assumptions in the minimum viable pivot are still unverified and could collapse the plan if wrong? (3) What one experiment (a customer conversation, a technical prototype, a data audit) would most efficiently resolve the largest remaining uncertainty?",
+      "expected": "A ranked list of 3–5 remaining unknowns with their potential impact, and a single highest-leverage experiment the founder should run in the next 30 days.",
+      "preconditions": [
+        "synthesis-true-problem-statement"
+      ]
+    }
+  ]
+}

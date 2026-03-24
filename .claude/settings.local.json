@@ -28,7 +28,8 @@
       "Bash(/Users/nayak/Documents/Grid/.venv/bin/python3 -c \"import psutil; print\\(f''CPU: {psutil.cpu_percent\\(\\)}%  RAM: {psutil.virtual_memory\\(\\).percent}%''\\)\")",
       "Bash(python3 -m json.tool)",
       "Bash(/Users/nayak/Documents/Grid/.venv/bin/python3 -c \"import psutil; print\\(psutil.cpu_percent\\(interval=0.1\\), psutil.virtual_memory\\(\\).percent\\)\")",
-      "Bash(/Users/nayak/Documents/Grid/.venv/bin/python3 -c \"import psutil; print\\(''first:'', psutil.cpu_percent\\(interval=None\\)\\); import time; time.sleep\\(0.1\\); print\\(''second:'', psutil.cpu_percent\\(interval=None\\)\\)\")"
+      "Bash(/Users/nayak/Documents/Grid/.venv/bin/python3 -c \"import psutil; print\\(''first:'', psutil.cpu_percent\\(interval=None\\)\\); import time; time.sleep\\(0.1\\); print\\(''second:'', psutil.cpu_percent\\(interval=None\\)\\)\")",
+      "Bash(.venv/bin/python3 -c \"from mlx_lm.generate import generate_step; help\\(generate_step\\)\")"
     ]
   }
 }
